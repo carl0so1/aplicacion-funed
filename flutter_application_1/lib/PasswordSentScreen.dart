@@ -26,7 +26,7 @@ class PasswordSentScreen extends StatelessWidget {
               SizedBox(height: 30),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+                  Navigator.pushNamedAndRemoveUntil(context, '/welcome', (route) => false);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,

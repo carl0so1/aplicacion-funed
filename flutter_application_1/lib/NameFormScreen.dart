@@ -19,8 +19,20 @@ class _NameFormScreenState extends State<NameFormScreen> {
         SnackBar(content: Text('Bienvenido, $fullName')),
       );
 
-      // Aquí puedes guardar el nombre o navegar a otra pantalla
-      // Navigator.pushNamed(context, '/siguientePantalla');
+      // Navegar a la pantalla de verificación de correo
+      Future.delayed(Duration(seconds: 1), () {
+        // Obtener argumentos de navegación
+        final args = ModalRoute.of(context)!.settings.arguments as Map<String, String>?;
+        Navigator.pushReplacementNamed(
+          context, 
+          '/emailVerification',
+          arguments: {
+            'userType': args?['userType'] ?? 'estudiante',
+            'userName': fullName,
+            'userEmail': args?['userEmail'] ?? 'usuario@ejemplo.com',
+          },
+        );
+      });
     }
   }
 

@@ -8,6 +8,8 @@ import 'PasswordSentScreen.dart';
 import 'ChooseAccountScreen.dart';
 import 'NameFormScreen.dart';
 import 'WelcomeScreen.dart';
+import 'HomeScreen.dart';
+import 'EmailVerificationScreen.dart';
 
 
 
@@ -19,7 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FUNED Educación',
+      title: 'FUNED Academia de Belleza',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF2B1A7F), // Color azul oscuro
       ),
@@ -30,8 +32,23 @@ class MyApp extends StatelessWidget {
         '/register': (context) => RegisterScreen(),
         '/recover': (context) => RecoverScreen(),
         '/chooseAccount': (context) => ChooseAccountScreen(),
-        '/nameForm': (context) => NameFormScreen(),
+
+        '/emailVerification': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, String>?;
+          return EmailVerificationScreen(
+            userType: args?['userType'] ?? 'estudiante',
+            userName: args?['userName'] ?? 'Usuario',
+            userEmail: args?['userEmail'] ?? 'usuario@ejemplo.com',
+          );
+        },
         '/passwordSent': (context) => PasswordSentScreen(),
+        '/home': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, String>?;
+          return HomeScreen(
+            userType: args?['userType'] ?? 'estudiante',
+            userName: args?['userName'] ?? 'Usuario',
+          );
+        },
       },
     );
   }

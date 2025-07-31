@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'services/auth_service.dart';
 
 class LoginScreen extends StatelessWidget {
   // Controladores para los campos de texto
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  // Método de autenticación simulado (puedes reemplazarlo con Firebase, API, etc.)
-  void _login(BuildContext context, String role) {
+  // Método de autenticación real
+  void _login(BuildContext context, String role) async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
@@ -17,21 +18,59 @@ class LoginScreen extends StatelessWidget {
       return;
     }
 
-    // Aquí podrías hacer validaciones diferentes según el rol
-    if (role == 'docente') {
-      // Lógica de autenticación para docentes
+    // Mostrar loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text('Iniciando sesión...'),
+            ],
+          ),
+        );
+      },
+    );
+
+    // Intentar login con autenticación real
+    final success = await AuthService.loginUser(
+      email: email,
+      password: password,
+      userType: role,
+    );
+
+    // Cerrar loading
+    Navigator.of(context).pop();
+
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('¡Bienvenido docente, $email!')),
+        SnackBar(
+          content: Text('¡Bienvenido ${role == 'docente' ? 'docente' : 'estudiante'}, $email!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Navegar a la pantalla principal
+      Navigator.pushReplacementNamed(
+        context, 
+        '/home',
+        arguments: {
+          'userType': role,
+          'userName': email.split('@')[0],
+        },
       );
     } else {
-      // Lógica de autenticación para estudiantes
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('¡Bienvenido estudiante, $email!')),
+        SnackBar(
+          content: Text('Credenciales incorrectas o correo no verificado'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
-
-    // Después de autenticar, navega a tu pantalla principal
-    // Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
@@ -86,6 +125,21 @@ class LoginScreen extends StatelessWidget {
                     border: OutlineInputBorder(),
                   ),
                   obscureText: true,
+                ),
+                const SizedBox(height: 10),
+                
+                // ---------- Enlace olvidé contraseña ----------
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/recover');
+                    },
+                    child: const Text(
+                      '¿Olvidaste tu contraseña?',
+                      style: TextStyle(color: Colors.lightBlueAccent),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
 

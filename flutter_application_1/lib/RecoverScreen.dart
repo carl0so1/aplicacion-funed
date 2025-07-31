@@ -34,7 +34,7 @@ class _RecoverScreenState extends State<RecoverScreen> {
               key: _formKey,
               child: Column(
                 children: [
-                  Icon(Icons.facebook, size: 100, color: Colors.white70),
+                  Icon(Icons.lock_reset, size: 100, color: Colors.white70),
                   SizedBox(height: 20),
                   Text(
                     'Recupera tu cuenta',

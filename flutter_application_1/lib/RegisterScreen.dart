@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -10,15 +11,67 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  String _selectedUserType = 'estudiante';
 
-  void _registerUser() {
+  void _registerUser() async {
     if (_formKey.currentState!.validate()) {
       if (passwordController.text == confirmPasswordController.text) {
-        // Registro exitoso
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Usuario registrado con éxito')),
+        // Mostrar loading
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              content: Row(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(width: 20),
+                  Text('Registrando usuario...'),
+                ],
+              ),
+            );
+          },
         );
-        // Aquí puedes redirigir o guardar en Firebase
+
+        // Intentar registro con autenticación real
+        final success = await AuthService.registerUser(
+          email: emailController.text.trim(),
+          password: passwordController.text,
+          userType: _selectedUserType,
+        );
+
+        // Cerrar loading
+        Navigator.of(context).pop();
+
+        if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Usuario registrado con éxito. Verifica tu correo.'),
+              backgroundColor: Colors.green,
+            ),
+        );
+          
+          // Navegar a la verificación de correo
+          Future.delayed(Duration(seconds: 1), () {
+            Navigator.pushReplacementNamed(
+              context, 
+              '/emailVerification',
+              arguments: {
+                'userType': _selectedUserType,
+                'userEmail': emailController.text.trim(),
+                'userName': emailController.text.split('@')[0],
+              },
+            );
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error en el registro. Intenta de nuevo.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Las contraseñas no coinciden')),
@@ -50,6 +103,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   SizedBox(height: 20),
                   Icon(Icons.school, size: 100, color: Colors.white70),
                   SizedBox(height: 20),
+
+                  // ---------- Selector de tipo de usuario ----------
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedUserType,
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        labelText: 'Tipo de usuario',
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'estudiante',
+                          child: Text('Estudiante'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'docente',
+                          child: Text('Docente'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedUserType = value!;
+                        });
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 16),
                   TextFormField(
                     controller: emailController,
                     decoration: InputDecoration(

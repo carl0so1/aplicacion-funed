@@ -128,6 +128,37 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen>
                   );
                 },
               ),
+              const SizedBox(height: 20),
+
+              // ---------- Separador ----------
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.white54)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      'o',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: Colors.white54)),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // ---------- Botón Registrarse ----------
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white),
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                icon: const Icon(Icons.person_add),
+                label: const Text('Registrarse'),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/register');
+                },
+              ),
             ],
           ),
         ),
