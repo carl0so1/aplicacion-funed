@@ -27,9 +27,9 @@ class LoginScreen extends StatelessWidget {
           backgroundColor: Colors.white,
           content: Row(
             children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text('Iniciando sesión...'),
+              const CircularProgressIndicator(),
+              const SizedBox(width: 20),
+              const Text('Iniciando sesión...'),
             ],
           ),
         );
@@ -60,7 +60,7 @@ class LoginScreen extends StatelessWidget {
         '/home',
         arguments: {
           'userType': role,
-          'userName': email.split('@')[0],
+          'userName': email.contains('@') ? email.split('@')[0] : email,
         },
       );
     } else {
@@ -76,12 +76,22 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Recuperar el argumento enviado desde ChooseAccountScreen
-    final String userRole =
-        ModalRoute.of(context)!.settings.arguments as String? ?? 'desconocido';
+    final Object? args = ModalRoute.of(context)?.settings.arguments;
+    final String userRole = (args is String && (args == 'docente' || args == 'estudiante')) ? args : '';
 
-    // Texto bonito para mostrar en pantalla
-    String roleLabel =
-        userRole == 'docente' ? 'Docente' : userRole == 'estudiante' ? 'Estudiante' : 'Invitado';
+    // Si no hay rol válido, redirigir a la selección de cuenta
+    if (userRole.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/chooseAccount');
+      });
+      return Scaffold(
+        backgroundColor: const Color(0xFF2B1A7F),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Texto bonito para mostrar en pantalla (solo Docente/Estudiante)
+    final String roleLabel = userRole == 'docente' ? 'Docente' : 'Estudiante';
 
     return Scaffold(
       backgroundColor: const Color(0xFF2B1A7F), // Azul oscuro
@@ -106,8 +116,10 @@ class LoginScreen extends StatelessWidget {
                 // ---------- Campo correo ----------
                 TextField(
                   controller: emailController,
+                  style: TextStyle(color: Colors.blue),
                   decoration: const InputDecoration(
                     labelText: 'Correo electrónico',
+                    labelStyle: TextStyle(color: Colors.blue),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(),
@@ -118,8 +130,10 @@ class LoginScreen extends StatelessWidget {
                 // ---------- Campo contraseña ----------
                 TextField(
                   controller: passwordController,
+                  style: TextStyle(color: Colors.blue),
                   decoration: const InputDecoration(
                     labelText: 'Contraseña',
+                    labelStyle: TextStyle(color: Colors.blue),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(),
@@ -137,7 +151,7 @@ class LoginScreen extends StatelessWidget {
                     },
                     child: const Text(
                       '¿Olvidaste tu contraseña?',
-                      style: TextStyle(color: Colors.lightBlueAccent),
+                      style: TextStyle(color: Colors.blue),
                     ),
                   ),
                 ),
@@ -151,14 +165,18 @@ class LoginScreen extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                   ),
-                  child: const Text('Iniciar sesión'),
+                  child: const Text(
+                    'Iniciar sesión',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 const SizedBox(height: 20),
 
                 // ---------- Alternativas de login ----------
                 const Text(
                   'o continúa con',
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(color: Colors.blue
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -183,14 +201,18 @@ class LoginScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // ---------- Ir a registro ----------
-                TextButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/register');
-                  },
+                // ---------- Información de registro ----------
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                  ),
                   child: const Text(
-                    '¿No tienes cuenta? Regístrate',
-                    style: TextStyle(color: Colors.lightBlueAccent),
+                    '¿No tienes cuenta? Contacta al administrador para obtener acceso.',
+                    style: TextStyle(color: Colors.blue, fontSize: 12),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ],

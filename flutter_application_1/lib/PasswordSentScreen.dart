@@ -21,7 +21,7 @@ class PasswordSentScreen extends StatelessWidget {
               Text(
                 'Te hemos enviado un enlace de recuperación a tu correo o número de celular.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 16),
+                style: TextStyle(color: Colors.white, fontSize: 16),
               ),
               SizedBox(height: 30),
               ElevatedButton(
@@ -32,7 +32,10 @@ class PasswordSentScreen extends StatelessWidget {
                   backgroundColor: Colors.green,
                   padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 ),
-                child: Text('Volver al inicio'),
+                child: Text(
+                  'Volver al inicio',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),

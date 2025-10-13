@@ -1,5 +1,25 @@
 import 'package:flutter/material.dart';
+
+// Servicios
+import 'services/api_service.dart';
 import 'services/auth_service.dart';
+
+// Pantallas
+import 'CourseDetailScreen.dart';
+import 'AdminCoursesScreen.dart';
+
+// Componentes compartidos
+import 'components/shared/BottomNavBar.dart';
+import 'components/shared/CustomAppBar.dart';
+
+// Componentes de la pantalla principal
+import 'components/home/HomeContent.dart';
+import 'components/home/CoursesSection.dart';
+import 'components/home/calendar_section.dart';
+import 'components/home/ProfileSection.dart';
+
+// Diálogos
+import 'components/dialogs/LogoutDialog.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userType;
@@ -17,1228 +37,289 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-
-  // Datos del curso (esto podría venir de una API o base de datos)
-  final Map<String, dynamic> cursoInfo = {
-    'nombre': 'Corte y Peinado Profesional',
-    'codigo': 'BELLEZA-101',
-    'profesor': 'Lic. María González',
-    'creditos': 4,
-    'semestre': '2024-1',
-    'descripcion': 'Curso completo de técnicas de corte y peinado para diferentes tipos de cabello.',
-  };
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  void _verCurso() {
-    // Aquí se navegaría a la pantalla de detalles del curso
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          title: Text(
-            'Información del Curso',
-            style: TextStyle(color: Color(0xFF2B1A7F)),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Nombre: ${cursoInfo['nombre']}'),
-              Text('Código: ${cursoInfo['codigo']}'),
-              Text('Profesor: ${cursoInfo['profesor']}'),
-              Text('Créditos: ${cursoInfo['creditos']}'),
-              Text('Semestre: ${cursoInfo['semestre']}'),
-              SizedBox(height: 10),
-              Text('Descripción: ${cursoInfo['descripcion']}'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Cerrar',
-                style: TextStyle(color: Color(0xFF2B1A7F)),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _cerrarSesion() async {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          title: Text(
-            'Cerrar Sesión',
-            style: TextStyle(color: Color(0xFF2B1A7F)),
-          ),
-          content: Text('¿Estás seguro de que quieres cerrar sesión?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Cancelar',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                
-                // Cerrar sesión real
-                await AuthService.logout();
-                
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  '/welcome',
-                  (Route<dynamic> route) => false,
-                );
-              },
-              child: Text(
-                'Cerrar Sesión',
-                style: TextStyle(color: Color(0xFF2B1A7F)),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildBody() {
-    switch (_selectedIndex) {
-      case 0:
-        return _buildHomeContent();
-      case 1:
-        return _buildCoursesContent();
-      case 2:
-        return _buildProfileContent();
-      default:
-        return _buildHomeContent();
-    }
-  }
-
-  Widget _buildHomeContent() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Tarjeta de bienvenida
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '¡Bienvenido, ${widget.userName}!',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2B1A7F),
-                  ),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  'Tipo de usuario: ${widget.userType == 'docente' ? 'Docente' : 'Estudiante'}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 30),
-
-          // Tarjeta del curso actual
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Curso Actual',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2B1A7F),
-                      ),
-                    ),
-                    Icon(
-                      Icons.school,
-                      color: Color(0xFF2B1A7F),
-                      size: 30,
-                    ),
-                  ],
-                ),
-                SizedBox(height: 15),
-                Text(
-                  cursoInfo['nombre'],
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'Código: ${cursoInfo['codigo']}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'Profesor: ${cursoInfo['profesor']}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _verCurso,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF2B1A7F),
-                    minimumSize: Size(double.infinity, 45),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    'Ver todo sobre el curso',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 30),
-
-          // Tarjeta de estadísticas rápidas
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Resumen',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2B1A7F),
-                  ),
-                ),
-                SizedBox(height: 15),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatItem('Asignaciones', '5', Icons.assignment),
-                    _buildStatItem('Exámenes', '2', Icons.quiz),
-                    _buildStatItem('Progreso', '75%', Icons.trending_up),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: Color(0xFF2B1A7F),
-          size: 30,
-        ),
-        SizedBox(height: 5),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2B1A7F),
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCoursesContent() {
-    if (widget.userType == 'docente') {
-      return _buildTeacherCoursesContent();
-    } else {
-      return _buildStudentCoursesContent();
-    }
-  }
-
-  Widget _buildStudentCoursesContent() {
-    // Lista de cursos para estudiantes
-    final List<Map<String, dynamic>> cursos = [
-      {
-        'nombre': 'Corte y Peinado Profesional',
-        'codigo': 'BELLEZA-101',
-        'profesor': 'Lic. María González',
-        'creditos': 4,
-        'progreso': 75,
-        'color': Colors.pink,
-      },
-      {
-        'nombre': 'Maquillaje Artístico',
-        'codigo': 'BELLEZA-102',
-        'profesor': 'Lic. Ana Rodríguez',
-        'creditos': 3,
-        'progreso': 60,
-        'color': Colors.purple,
-      },
-      {
-        'nombre': 'Coloración y Tintes',
-        'codigo': 'BELLEZA-103',
-        'profesor': 'Lic. Carmen López',
-        'creditos': 4,
-        'progreso': 90,
-        'color': Colors.orange,
-      },
-      {
-        'nombre': 'Manicure y Pedicure',
-        'codigo': 'BELLEZA-104',
-        'profesor': 'Lic. Patricia Silva',
-        'creditos': 3,
-        'progreso': 45,
-        'color': Colors.red,
-      },
-      {
-        'nombre': 'Tratamientos Faciales',
-        'codigo': 'BELLEZA-105',
-        'profesor': 'Lic. Rosa Martínez',
-        'creditos': 3,
-        'progreso': 30,
-        'color': Colors.teal,
-      },
-    ];
-
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Mis Cursos',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 20),
-          ...cursos.map((curso) => Container(
-            margin: EdgeInsets.only(bottom: 15),
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            curso['nombre'],
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2B1A7F),
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          Text(
-                            'Código: ${curso['codigo']}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          Text(
-                            'Profesor: ${curso['profesor']}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                                         Container(
-                       padding: EdgeInsets.all(8),
-                       decoration: BoxDecoration(
-                         color: curso['color'].withOpacity(0.1),
-                         borderRadius: BorderRadius.circular(8),
-                       ),
-                       child: Icon(
-                         _getCourseIcon(curso['codigo']),
-                         color: curso['color'],
-                         size: 30,
-                       ),
-                     ),
-                  ],
-                ),
-                SizedBox(height: 15),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Progreso: ${curso['progreso']}%',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2B1A7F),
-                      ),
-                    ),
-                    Text(
-                      '${curso['creditos']} créditos',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                LinearProgressIndicator(
-                  value: curso['progreso'] / 100,
-                  backgroundColor: Colors.grey[300],
-                  valueColor: AlwaysStoppedAnimation<Color>(curso['color']),
-                ),
-                SizedBox(height: 15),
-                ElevatedButton(
-                  onPressed: () {
-                    // Aquí se navegaría a los detalles del curso
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          backgroundColor: Colors.white,
-                          title: Text(
-                            'Detalles del Curso',
-                            style: TextStyle(color: Color(0xFF2B1A7F)),
-                          ),
-                          content: Text('Aquí se mostrarían los detalles completos del curso ${curso['nombre']}'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: Text(
-                                'Cerrar',
-                                style: TextStyle(color: Color(0xFF2B1A7F)),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: curso['color'],
-                    minimumSize: Size(double.infinity, 40),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    'Ver detalles',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          )).toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTeacherCoursesContent() {
-    // Lista de cursos para docentes
-    final List<Map<String, dynamic>> cursosDocente = [
-      {
-        'nombre': 'Corte y Peinado Profesional',
-        'codigo': 'BELLEZA-101',
-        'estudiantes': 25,
-        'horario': 'Lunes y Miércoles 9:00 AM',
-        'color': Colors.pink,
-      },
-      {
-        'nombre': 'Maquillaje Artístico',
-        'codigo': 'BELLEZA-102',
-        'estudiantes': 18,
-        'horario': 'Martes y Jueves 2:00 PM',
-        'color': Colors.purple,
-      },
-      {
-        'nombre': 'Coloración y Tintes',
-        'codigo': 'BELLEZA-103',
-        'estudiantes': 22,
-        'horario': 'Viernes 10:00 AM',
-        'color': Colors.orange,
-      },
-      {
-        'nombre': 'Manicure y Pedicure',
-        'codigo': 'BELLEZA-104',
-        'estudiantes': 15,
-        'horario': 'Sábados 9:00 AM',
-        'color': Colors.red,
-      },
-      {
-        'nombre': 'Tratamientos Faciales',
-        'codigo': 'BELLEZA-105',
-        'estudiantes': 12,
-        'horario': 'Lunes y Viernes 4:00 PM',
-        'color': Colors.teal,
-      },
-    ];
-
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Mis Cursos - Panel de Docente',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 20),
-          ...cursosDocente.map((curso) => Container(
-            margin: EdgeInsets.only(bottom: 15),
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            curso['nombre'],
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2B1A7F),
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          Text(
-                            'Código: ${curso['codigo']}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          Text(
-                            'Estudiantes: ${curso['estudiantes']}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          Text(
-                            'Horario: ${curso['horario']}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: curso['color'].withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        _getCourseIcon(curso['codigo']),
-                        color: curso['color'],
-                        size: 30,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 15),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                backgroundColor: Colors.white,
-                                title: Text(
-                                  'Gestionar Estudiantes',
-                                  style: TextStyle(color: Color(0xFF2B1A7F)),
-                                ),
-                                content: Text('Aquí podrías ver y gestionar la lista de estudiantes del curso ${curso['nombre']}'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(),
-                                    child: Text(
-                                      'Cerrar',
-                                      style: TextStyle(color: Color(0xFF2B1A7F)),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                        icon: Icon(Icons.people),
-                        label: Text('Estudiantes'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: curso['color'],
-                          minimumSize: Size(0, 40),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                backgroundColor: Colors.white,
-                                title: Text(
-                                  'Gestionar Contenido',
-                                  style: TextStyle(color: Color(0xFF2B1A7F)),
-                                ),
-                                content: Text('Aquí podrías gestionar el contenido y materiales del curso ${curso['nombre']}'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(),
-                                    child: Text(
-                                      'Cerrar',
-                                      style: TextStyle(color: Color(0xFF2B1A7F)),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                        icon: Icon(Icons.edit),
-                        label: Text('Contenido'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[600],
-                          minimumSize: Size(0, 40),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          )).toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileContent() {
-    if (widget.userType == 'docente') {
-      return _buildTeacherProfileContent();
-    } else {
-      return _buildStudentProfileContent();
-    }
-  }
-
-  Widget _buildStudentProfileContent() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        children: [
-          // Tarjeta de información del usuario
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Color(0xFF2B1A7F),
-                  child: Icon(
-                    Icons.person,
-                    size: 50,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 15),
-                Text(
-                  widget.userName,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2B1A7F),
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'Estudiante',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildProfileStat('Cursos', '3'),
-                    _buildProfileStat('Asignaciones', '12'),
-                    _buildProfileStat('Promedio', '85%'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 20),
-
-          // Tarjeta de opciones
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Opciones',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2B1A7F),
-                  ),
-                ),
-                SizedBox(height: 15),
-                _buildProfileOption(
-                  'Editar Perfil',
-                  Icons.edit,
-                  () {
-                    // Aquí se navegaría a editar perfil
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Función de editar perfil en desarrollo')),
-                    );
-                  },
-                ),
-                _buildProfileOption(
-                  'Configuración',
-                  Icons.settings,
-                  () {
-                    // Aquí se navegaría a configuración
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Función de configuración en desarrollo')),
-                    );
-                  },
-                ),
-                _buildProfileOption(
-                  'Ayuda y Soporte',
-                  Icons.help,
-                  () {
-                    // Aquí se navegaría a ayuda
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Función de ayuda en desarrollo')),
-                    );
-                  },
-                ),
-                _buildProfileOption(
-                  'Acerca de',
-                  Icons.info,
-                  () {
-                    // Aquí se navegaría a acerca de
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          backgroundColor: Colors.white,
-                          title: Text(
-                            'Acerca de FUNED',
-                            style: TextStyle(color: Color(0xFF2B1A7F)),
-                          ),
-                          content: Text('FUNED Academia de Belleza - Aplicación móvil para estudiantes y docentes de belleza. Versión 1.0.0'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: Text(
-                                'Cerrar',
-                                style: TextStyle(color: Color(0xFF2B1A7F)),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 20),
-
-          // Botón de cerrar sesión
-          ElevatedButton(
-            onPressed: _cerrarSesion,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              minimumSize: Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: Text(
-              'Cerrar Sesión',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTeacherProfileContent() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        children: [
-          // Tarjeta de información del docente
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Color(0xFF2B1A7F),
-                  child: Icon(
-                    Icons.school,
-                    size: 50,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 15),
-                Text(
-                  widget.userName,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2B1A7F),
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'Docente',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildProfileStat('Cursos', '5'),
-                    _buildProfileStat('Estudiantes', '92'),
-                    _buildProfileStat('Horas', '120'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 20),
-
-          // Tarjeta de opciones del docente
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Panel de Docente',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2B1A7F),
-                  ),
-                ),
-                SizedBox(height: 15),
-                _buildProfileOption(
-                  'Gestionar Cursos',
-                  Icons.school,
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Función de gestión de cursos en desarrollo')),
-                    );
-                  },
-                ),
-                _buildProfileOption(
-                  'Calificaciones',
-                  Icons.grade,
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Función de calificaciones en desarrollo')),
-                    );
-                  },
-                ),
-                _buildProfileOption(
-                  'Asistencia',
-                  Icons.checklist,
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Función de asistencia en desarrollo')),
-                    );
-                  },
-                ),
-                _buildProfileOption(
-                  'Materiales',
-                  Icons.folder,
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Función de materiales en desarrollo')),
-                    );
-                  },
-                ),
-                _buildProfileOption(
-                  'Configuración',
-                  Icons.settings,
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Función de configuración en desarrollo')),
-                    );
-                  },
-                ),
-                _buildProfileOption(
-                  'Ayuda y Soporte',
-                  Icons.help,
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Función de ayuda en desarrollo')),
-                    );
-                  },
-                ),
-                _buildProfileOption(
-                  'Acerca de',
-                  Icons.info,
-                  () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          backgroundColor: Colors.white,
-                          title: Text(
-                            'Acerca de FUNED',
-                            style: TextStyle(color: Color(0xFF2B1A7F)),
-                          ),
-                          content: Text('FUNED Academia de Belleza - Panel de docente. Versión 1.0.0'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: Text(
-                                'Cerrar',
-                                style: TextStyle(color: Color(0xFF2B1A7F)),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 20),
-
-          // Botón de cerrar sesión
-          ElevatedButton(
-            onPressed: _cerrarSesion,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              minimumSize: Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: Text(
-              'Cerrar Sesión',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileStat(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2B1A7F),
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
-
-  IconData _getCourseIcon(String codigo) {
-    switch (codigo) {
-      case 'BELLEZA-101':
-        return Icons.content_cut; // Corte y peinado
-      case 'BELLEZA-102':
-        return Icons.face; // Maquillaje
-      case 'BELLEZA-103':
-        return Icons.color_lens; // Coloración
-      case 'BELLEZA-104':
-        return Icons.brush; // Manicure
-      case 'BELLEZA-105':
-        return Icons.spa; // Tratamientos faciales
-      default:
-        return Icons.school;
-    }
-  }
-
-  Widget _buildProfileOption(String title, IconData icon, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: Color(0xFF2B1A7F),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: Color(0xFF2B1A7F),
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      trailing: Icon(
-        Icons.arrow_forward_ios,
-        color: Colors.grey,
-        size: 16,
-      ),
-      onTap: onTap,
-    );
-  }
+  List<Map<String, dynamic>> _courses = [];
+  Map<String, dynamic>? _currentCourse;
+  bool _isLoading = true;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFF2B1A7F),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          'FUNED Academia de Belleza',
-          style: TextStyle(
-            color: Color(0xFF2B1A7F),
-            fontWeight: FontWeight.bold,
-          ),
+  void initState() {
+    super.initState();
+    _loadCourses();
+  }
+
+  // Función para mapear los datos de la API al formato esperado por la UI
+  Map<String, dynamic> _mapCourseData(Map<String, dynamic> apiCourse) {
+    // Verificar si es del endpoint cursosPersonas (estructura con idMatricula)
+    if (apiCourse.containsKey('idMatricula')) {
+      return {
+        'id': apiCourse['idCurso']?.toString() ?? apiCourse['id']?.toString(),
+        'nombre': apiCourse['nombre']?.toString() ?? 'Sin nombre',
+        'codigo': apiCourse['codigo']?.toString() ?? apiCourse['idCurso']?.toString() ?? 'N/A',
+        'duracion': apiCourse['duracion'],
+        'temario': apiCourse['temario']?.toString() ?? '',
+        'tipo_curso': apiCourse['tipo']?.toString() ?? '',
+        // Nuevos campos para enlazar endpoints por oferta y matrícula
+        'idOferta': apiCourse['idOferta']?.toString(),
+        'idMatricula': apiCourse['idMatricula']?.toString(),
+        // Atributos de UI
+        'color': Colors.blue,
+        'profesor': 'Por asignar',
+        'creditos': 3,
+        'semestre': 'Actual',
+        'progreso': 0,
+      };
+    }
+
+    // Mapeo original para otros endpoints (ofertas/cursos)
+    return {
+      'id': apiCourse['id'],
+      'nombre': apiCourse['nombre_curso']?.toString() ?? 'Sin nombre',
+      'codigo': apiCourse['codigo']?.toString() ?? apiCourse['id']?.toString() ?? 'N/A',
+      'duracion': apiCourse['duracion'],
+      'temario': apiCourse['temario']?.toString() ?? '',
+      'tipo_curso': apiCourse['tipo_curso']?.toString() ?? '',
+      'fechaInicio': apiCourse['fechaInicio']?.toString() ?? '',
+      'fechaFin': apiCourse['fechaFin']?.toString() ?? '',
+      'horario': apiCourse['horario']?.toString() ?? '',
+      'precio': apiCourse['precio']?.toString() ?? '',
+      'cupos': apiCourse['cupos'],
+      'color': Colors.cyan,
+      'progreso': 0,
+      'totalEstudiantes': 0,
+      'tareasPendientes': 0,
+    };
+  }
+
+  Future<void> _loadCourses() async {
+  try {
+    // Verificar que tenemos un token de autenticación
+    if (AuthService.authToken == null) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No hay sesión activa. Por favor, inicia sesión nuevamente.')),
+        );
+      }
+      return;
+    }
+
+    print('Cargando cursos para tipo de usuario: ${widget.userType}');
+    
+    Map<String, dynamic> result;
+    
+    if (widget.userType.toLowerCase() == 'estudiante') {
+      // Usar el nuevo endpoint con ID de persona si está disponible
+      final userId = AuthService.userId;
+      if (userId != null && userId.isNotEmpty) {
+        print('🆔 Usando endpoint cursosPersonas con ID: $userId');
+        result = await ApiService.getCoursesByPersonId(userId);
+      } else {
+        print('⚠️ No se encontró userId, usando endpoint por defecto');
+        result = await ApiService.getCoursesByStudent();
+      }
+    } else {
+      result = await ApiService.getCoursesByTeacher();
+    }
+    
+    print('Resultado de la API: $result');
+    
+    if (mounted) {
+      if (result['success'] == true) {
+        // Mapear los datos de la API al formato esperado
+        List<Map<String, dynamic>> rawCourses;
+        
+        // Verificar si la respuesta tiene estructura de cursosPersonas
+        if (result['data'] is Map && result['data']['cursos'] != null) {
+          rawCourses = List<Map<String, dynamic>>.from(result['data']['cursos'] ?? []);
+        } else {
+          rawCourses = List<Map<String, dynamic>>.from(result['data'] ?? []);
+        }
+        
+        final mappedCourses = rawCourses.map((course) => _mapCourseData(course)).toList();
+        
+        setState(() {
+          _courses = mappedCourses;
+          _currentCourse = _courses.isNotEmpty ? _courses.first : null;
+          _isLoading = false;
+        });
+        print('Cursos cargados: ${_courses.length}');
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error del servidor: ${result['message'] ?? 'Error desconocido'}')),
+        );
+      }
+    }
+  } catch (e) {
+    print('Error al cargar cursos: $e');
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar cursos: $e')),
+      );
+    }
+  }
+}
+
+void _onItemTapped(int index) {
+  setState(() {
+    _selectedIndex = index;
+  });
+}
+
+void _cerrarSesion() {
+  LogoutDialog.show(context);
+}
+
+
+
+void _verCurso(Map<String, dynamic> course) async {
+  try {
+    final courseId = course['id']?.toString() ?? '';
+    if (courseId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ID del curso no válido')),
+      );
+      return;
+    }
+  
+    // Pre-cargar módulos y contenido de apoyo por idOferta si disponible
+    List<Map<String, dynamic>> modules = [];
+    List<Map<String, dynamic>> supportContent = [];
+    final idOferta = course['idOferta']?.toString();
+    if (idOferta != null && idOferta.isNotEmpty) {
+      final modulesResult = await ApiService.getModulesByOffer(idOferta);
+      if (modulesResult['success'] == true) {
+        final raw = modulesResult['data'];
+        if (raw is List) {
+          modules = List<Map<String, dynamic>>.from(raw.map((m) => {
+                    'title': (m['nombre'] ?? m['titulo'] ?? 'Módulo').toString(),
+                    'description': (m['descripcion'] ?? '').toString(),
+                    'duration': (m['duracion'] ?? '').toString(),
+                    'completed': false,
+                  }));
+        }
+      }
+  
+      final contentResult = await ApiService.getSupportContentByOffer(idOferta);
+      if (contentResult['success'] == true) {
+        final raw = contentResult['data'];
+        if (raw is List) {
+          supportContent = List<Map<String, dynamic>>.from(raw.map((c) => {
+                    'id': (c['id'] ?? DateTime.now().millisecondsSinceEpoch).toString(),
+                    'title': (c['titulo'] ?? c['nombre'] ?? 'Recurso').toString(),
+                    'type': (c['tipo'] ?? 'Archivo').toString(),
+                    'size': (c['tamano'] ?? '').toString(),
+                    'downloads': (c['descargas'] ?? 0),
+                    'filePath': (c['archivo'] ?? c['url'] ?? '').toString(),
+                    'uploadDate': (c['fechaSubida'] ?? c['fecha'] ?? '' ).toString(),
+                    'description': (c['descripcion'] ?? '').toString(),
+                    'tags': List<String>.from((c['tags'] ?? []) as List? ?? []),
+                  }));
+        }
+      }
+    }
+  
+    final courseDetails = await ApiService.getCourseDetails(courseId);
+    if (!mounted) return;
+  
+    // Unir información del curso con datos precargados
+    final Map<String, dynamic> mergedCourseInfo = {
+      ...course,
+      ...(courseDetails['data'] is Map
+          ? Map<String, dynamic>.from(courseDetails['data'])
+          : {}),
+      'modulesData': modules,
+      'supportContentData': supportContent,
+    };
+  
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CourseDetailScreen(
+          courseInfo: mergedCourseInfo,
+          userType: widget.userType,
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.logout,
-              color: Color(0xFF2B1A7F),
-            ),
-            onPressed: _cerrarSesion,
-          ),
-        ],
       ),
-      body: _buildBody(),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        selectedItemColor: Color(0xFF2B1A7F),
-        unselectedItemColor: Colors.grey,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Inicio',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.school),
-            label: 'Cursos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
-        ],
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al cargar los detalles del curso: $e')),
+    );
+  }
+}
+
+Widget _buildBody() {
+  if (_isLoading) {
+    return const Center(
+      child: CircularProgressIndicator(
+        color: Colors.white,
       ),
     );
   }
-} 
+
+  switch (_selectedIndex) {
+    case 0:
+      return HomeContent(
+        userType: widget.userType,
+        userName: widget.userName,
+        currentCourse: _currentCourse,
+        onViewCourse: _verCurso,
+      );
+    case 1:
+      return CoursesSection(
+        userType: widget.userType,
+        onViewCourse: _verCurso,
+        courses: _courses,
+      );
+    case 2:
+      return const CalendarSection();
+    case 3:
+      return ProfileSection(
+        userName: widget.userName,
+        userType: widget.userType,
+        userEmail: 'user@example.com',
+        onLogout: _cerrarSesion,
+      );
+    case 4:
+      // Solo mostrar AdminCoursesScreen si el usuario es docente
+      if (widget.userType.toLowerCase() == 'docente') {
+        return const AdminCoursesScreen();
+      }
+      return HomeContent(
+        userType: widget.userType,
+        userName: widget.userName,
+        currentCourse: _currentCourse,
+        onViewCourse: _verCurso,
+      );
+    default:
+      return HomeContent(
+        userType: widget.userType,
+        userName: widget.userName,
+        currentCourse: _currentCourse,
+        onViewCourse: _verCurso,
+      );
+  }
+}
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: const Color(0xFF2B1A7F),
+    appBar: const CustomAppBar(title: 'FUNED'),
+    body: _buildBody(),
+    bottomNavigationBar: BottomNavBar(
+      selectedIndex: _selectedIndex,
+      onItemTapped: _onItemTapped,
+      userType: widget.userType,
+    ),
+  );
+}
+}

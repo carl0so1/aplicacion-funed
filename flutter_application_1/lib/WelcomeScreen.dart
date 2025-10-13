@@ -75,19 +75,22 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 'Educación a tu alcance',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.white70,
+                  color: Colors.white,
                 ),
               ),
               SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/chooseAccount');
+                  Navigator.pushReplacementNamed(context, '/chooseAccount');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   padding: EdgeInsets.symmetric(horizontal: 40, vertical: 14),
                 ),
-                child: Text('Comenzar'),
+                child: Text(
+                  'Comenzar',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),

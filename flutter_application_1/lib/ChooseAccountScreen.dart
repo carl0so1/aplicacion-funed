@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 
 class ChooseAccountScreen extends StatefulWidget {
   @override
@@ -88,7 +87,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen>
                 saludo,
                 style: const TextStyle(
                   fontSize: 22,
-                  color: Colors.white70,
+                  color: Colors.white,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -101,11 +100,14 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen>
                   minimumSize: const Size(double.infinity, 50),
                 ),
                 icon: const Icon(Icons.school),
-                label: const Text('Soy Docente'),
+                label: const Text(
+                  'Soy Docente',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
                 onPressed: () {
                   Navigator.pushNamed(
                     context,
-                    '/',
+                    '/login',
                     arguments: 'docente',
                   );
                 },
@@ -119,11 +121,14 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen>
                   minimumSize: const Size(double.infinity, 50),
                 ),
                 icon: const Icon(Icons.person),
-                label: const Text('Soy Estudiante'),
+                label: const Text(
+                  'Soy Estudiante',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
                 onPressed: () {
                   Navigator.pushNamed(
                     context,
-                    '/',
+                    '/login',
                     arguments: 'estudiante',
                   );
                 },
@@ -138,7 +143,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen>
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Text(
                       'o',
-                      style: TextStyle(color: Colors.white70),
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
                   Expanded(child: Divider(color: Colors.white54)),
@@ -146,19 +151,25 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen>
               ),
               const SizedBox(height: 20),
 
-              // ---------- Botón Registrarse ----------
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.white),
-                  minimumSize: const Size(double.infinity, 50),
+              // Nota: El registro se maneja desde el backend
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white.withOpacity(0.3)),
                 ),
-                icon: const Icon(Icons.person_add),
-                label: const Text('Registrarse'),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/register');
-                },
+                child: const Text(
+                  'Para registrarse como docente o estudiante, contacte al administrador del sistema.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
+              
+
             ],
           ),
         ),

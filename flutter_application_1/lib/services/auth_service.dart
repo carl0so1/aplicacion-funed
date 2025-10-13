@@ -1,8 +1,16 @@
-import 'dart:convert';
+import 'package:flutter_application_1/services/api_service.dart';
 
 class AuthService {
-  // Simulación de base de datos local
-  static final Map<String, Map<String, dynamic>> _users = {};
+  // Token de autenticación
+  static String? _authToken;
+  static String? _userType;
+  static String? _userEmail;
+  static String? _userId;
+  
+  static String? get authToken => _authToken;
+  static String? get userType => _userType;
+  static String? get userEmail => _userEmail;
+  static String? get userId => _userId;
   
   static Future<bool> registerUser({
     required String email,
@@ -10,55 +18,29 @@ class AuthService {
     required String userType,
   }) async {
     try {
-      // Simular registro exitoso
-      _users[email] = {
-        'email': email,
-        'password': password, // En una app real, esto estaría hasheado
-        'userType': userType,
-        'emailVerified': false,
-      };
-      
-      // Simular envío de correo de verificación
-      await sendVerificationEmail(email, userType);
-      
-      return true;
+      // En esta versión no implementamos el registro a través de la API
+      // ya que no se mencionó en los endpoints requeridos
+      return false;
     } catch (e) {
       print('Error en registro: $e');
       return false;
     }
   }
   
+  // Estos métodos ya no son necesarios con la API de Render
   static Future<bool> sendVerificationEmail(String email, String userType) async {
-    try {
-      // Simular envío de correo
-      print('Simulando envío de correo de verificación a: $email');
-      await Future.delayed(Duration(seconds: 1)); // Simular delay de red
-      return true;
-    } catch (e) {
-      print('Error enviando correo: $e');
-      return false;
-    }
+    // No implementado en la API de Render
+    return false;
   }
   
   static String generateVerificationToken(String email) {
-    // Simular generación de token
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final token = base64Encode(utf8.encode('$email:$timestamp'));
-    return token;
+    // No implementado en la API de Render
+    return '';
   }
   
   static Future<bool> verifyEmail(String email, String token) async {
-    try {
-      // Simular verificación de email
-      if (_users.containsKey(email)) {
-        _users[email]!['emailVerified'] = true;
-        return true;
-      }
-      return false;
-    } catch (e) {
-      print('Error verificando email: $e');
-      return false;
-    }
+    // No implementado en la API de Render
+    return false;
   }
   
   static Future<bool> loginUser({
@@ -67,45 +49,113 @@ class AuthService {
     required String userType,
   }) async {
     try {
-      // Verificar si el usuario existe y está verificado
-      if (_users.containsKey(email)) {
-        final user = _users[email]!;
-        if (user['password'] == password && 
-            user['userType'] == userType && 
-            user['emailVerified'] == true) {
-          return true;
+      print('🚀 AuthService: Iniciando login para $email como $userType');
+      final response = await ApiService.login(email, password);
+      
+      print('📋 AuthService: Respuesta del login: $response');
+      
+      if (response['success']) {
+        // Guardar el token de autenticación
+        final data = response['data'];
+        print('📊 AuthService: Data recibida: $data');
+        print('📊 AuthService: Estructura completa de data: ${data.runtimeType}');
+        print('📊 AuthService: Keys disponibles en data: ${data.keys}');
+        
+        // Log detallado de cada campo posible para userId
+        print('🔍 AuthService: Buscando userId en los siguientes campos:');
+        print('  - data["userId"]: ${data['userId']}');
+        print('  - data["id"]: ${data['id']}');
+        print('  - data["user_id"]: ${data['user_id']}');
+        print('  - data["idPersona"]: ${data['idPersona']}');
+        print('  - data["persona_id"]: ${data['persona_id']}');
+        print('  - data["personaId"]: ${data['personaId']}');
+        
+        // Extraer token - puede estar en diferentes campos
+        _authToken = data['token'] ?? data['access_token'] ?? data['accessToken'] ?? data['authToken'];
+        
+        // Extraer userType - puede estar en diferentes campos
+        _userType = data['userType'] ?? data['role'] ?? data['user_type'] ?? data['type'] ?? userType;
+        
+        // Extraer userId - puede estar en diferentes campos
+        _userId = data['userId']?.toString() ?? data['id']?.toString() ?? data['user_id']?.toString() ?? data['idPersona']?.toString();
+        
+        // Si data contiene un objeto user anidado, buscar ahí también
+        if (data['user'] != null) {
+          final userData = data['user'];
+          print('📊 AuthService: Datos de usuario anidados: $userData');
+          _userType = _userType ?? userData['userType'] ?? userData['role'] ?? userData['user_type'] ?? userData['type'];
+          _authToken = _authToken ?? userData['token'] ?? userData['access_token'];
+          _userId = _userId ?? userData['userId']?.toString() ?? userData['id']?.toString() ?? userData['user_id']?.toString() ?? userData['idPersona']?.toString() ?? userData['id_persona']?.toString();
+          
+          // Extraer el rol del objeto persona anidado
+          if (userData['persona'] != null) {
+            final personaData = userData['persona'];
+            print('👤 AuthService: Datos de persona: $personaData');
+            _userType = _userType ?? personaData['rol'];
+          }
         }
+        
+        _userEmail = email;
+        
+        print('✅ AuthService: Token guardado: $_authToken');
+        print('✅ AuthService: UserType guardado: $_userType');
+        print('✅ AuthService: Email guardado: $_userEmail');
+        print('✅ AuthService: UserId guardado: $_userId');
+        
+        // Validar que tenemos los datos mínimos necesarios
+        if (_authToken == null) {
+          print('⚠️ AuthService: No se encontró token en la respuesta');
+          return false;
+        }
+        
+        return true;
+      } else {
+        print('❌ AuthService: Login falló - ${response['message']}');
+        return false;
       }
-      return false;
     } catch (e) {
-      print('Error en login: $e');
+      print('❌ AuthService: Error en login: $e');
       return false;
     }
   }
   
   static Future<bool> isUserLoggedIn() async {
-    // Simular verificación de sesión
-    return false;
+    // Verificar si tenemos un token válido
+    return _authToken != null;
   }
   
   static Future<void> logout() async {
     try {
-      // Simular logout
-      print('Usuario desconectado');
+      if (_authToken != null) {
+        final response = await ApiService.logout();
+        if (response['success']) {
+          // Limpiar datos de sesión
+          _authToken = null;
+          _userType = null;
+          _userEmail = null;
+          _userId = null;
+        }
+      }
     } catch (e) {
       print('Error en logout: $e');
     }
   }
   
-  static Future<Map<String, String?>> getUserInfo() async {
+  static Future<Map<String, dynamic>> getUserInfo() async {
     try {
-      // Simular obtención de información del usuario
+      if (_authToken != null) {
+        final response = await ApiService.getUserProfile();
+        if (response['success']) {
+          return response['data'];
+        }
+      }
       return {
-        'email': null,
-        'userType': null,
+        'email': _userEmail,
+        'userType': _userType,
       };
     } catch (e) {
-      return {'email': null, 'userType': null};
+      print('Error obteniendo información del usuario: $e');
+      return {'email': _userEmail, 'userType': _userType};
     }
   }
-} 
+}

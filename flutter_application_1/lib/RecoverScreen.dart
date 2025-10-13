@@ -34,7 +34,7 @@ class _RecoverScreenState extends State<RecoverScreen> {
               key: _formKey,
               child: Column(
                 children: [
-                  Icon(Icons.lock_reset, size: 100, color: Colors.white70),
+                  Icon(Icons.lock_reset, size: 100, color: Colors.white),
                   SizedBox(height: 20),
                   Text(
                     'Recupera tu cuenta',
@@ -47,8 +47,10 @@ class _RecoverScreenState extends State<RecoverScreen> {
                   SizedBox(height: 20),
                   TextFormField(
                     controller: _inputController,
+                    style: TextStyle(color: Colors.blue),
                     decoration: InputDecoration(
                       labelText: 'Correo o número de celular',
+                      labelStyle: TextStyle(color: Colors.blue),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(),
@@ -67,7 +69,10 @@ class _RecoverScreenState extends State<RecoverScreen> {
                       backgroundColor: Colors.green,
                       padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                     ),
-                    child: Text('Enviar'),
+                    child: Text(
+                      'Enviar',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
                   ),
                   SizedBox(height: 20),
                   TextButton(
@@ -76,7 +81,7 @@ class _RecoverScreenState extends State<RecoverScreen> {
                     },
                     child: Text(
                       'Volver al inicio',
-                      style: TextStyle(color: Colors.lightBlueAccent),
+                      style: TextStyle(color: Colors.blue),
                     ),
                   ),
                 ],

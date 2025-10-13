@@ -61,8 +61,10 @@ class _NameFormScreenState extends State<NameFormScreen> {
                   SizedBox(height: 30),
                   TextFormField(
                     controller: _firstNameController,
+                    style: TextStyle(color: Colors.blue),
                     decoration: InputDecoration(
                       labelText: 'Nombre',
+                      labelStyle: TextStyle(color: Colors.blue),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(),
@@ -77,8 +79,10 @@ class _NameFormScreenState extends State<NameFormScreen> {
                   SizedBox(height: 16),
                   TextFormField(
                     controller: _lastNameController,
+                    style: TextStyle(color: Colors.blue),
                     decoration: InputDecoration(
                       labelText: 'Apellido',
+                      labelStyle: TextStyle(color: Colors.blue),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(),
@@ -98,7 +102,10 @@ class _NameFormScreenState extends State<NameFormScreen> {
                       padding:
                           EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                     ),
-                    child: Text('Continuar'),
+                    child: Text(
+                      'Continuar',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ],
               ),

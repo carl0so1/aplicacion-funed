@@ -178,7 +178,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.white70,
+                    color: Colors.white,
                   ),
                 ),
                 SizedBox(height: 10),
@@ -195,7 +195,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2B1A7F),
+                      color: Colors.blue,
                     ),
                   ),
                 ),
@@ -207,7 +207,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.white70,
+                    color: Colors.white,
                   ),
                 ),
                 SizedBox(height: 30),
@@ -230,6 +230,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
+                              color: Colors.white,
                             ),
                           ),
                   ),
@@ -244,7 +245,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                           ? 'Reenviar correo'
                           : 'Reenviar en $_resendTimer segundos',
                       style: TextStyle(
-                        color: _canResend ? Colors.lightBlueAccent : Colors.grey,
+                        color: _canResend ? Colors.blue : Colors.grey,
                       ),
                     ),
                   ),
@@ -259,7 +260,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     child: Text(
                       'Cambiar correo electrónico',
                       style: TextStyle(
-                        color: Colors.lightBlueAccent,
+                        color: Colors.blue,
                       ),
                     ),
                   ),
@@ -307,4 +308,4 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       ),
     );
   }
-} 
+}
