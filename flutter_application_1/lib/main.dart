@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 // Importar tus pantallas personalizadas
-import 'LoginScreen.dart';
+import 'login_screen.dart';
 import 'RecoverScreen.dart';
 import 'PasswordSentScreen.dart';
 import 'ChooseAccountScreen.dart';

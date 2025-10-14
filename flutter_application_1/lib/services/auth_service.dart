@@ -49,14 +49,14 @@ class AuthService {
     required String userType,
   }) async {
     try {
-      print('🚀 AuthService: Iniciando login para $email como $userType');
       final response = await ApiService.login(email, password);
       
-      print('📋 AuthService: Respuesta del login: $response');
-      
       if (response['success']) {
-        // Guardar el token de autenticación
+        // Guardar el token y datos del usuario usando id_persona correctamente
         final data = response['data'];
+        
+        // Token
+        _authToken = data['token'] ?? data['access_token'] ?? data['accessToken'] ?? data['authToken'];
         print('📊 AuthService: Data recibida: $data');
         print('📊 AuthService: Estructura completa de data: ${data.runtimeType}');
         if (data is Map) {
@@ -77,6 +77,40 @@ class AuthService {
         // Extraer token - puede estar en diferentes campos
         _authToken = (data is Map) ? (data['token'] ?? data['access_token'] ?? data['accessToken'] ?? data['authToken']) : null;
         
+        // Usuario anidado
+        final userData = (data is Map) ? (data['user'] ?? {}) : {};
+        final personaData = (userData is Map) ? (userData['persona'] ?? {}) : {};
+
+        // Email real del usuario
+        _userEmail = (userData is Map ? userData['email']?.toString() : null) ?? email;
+
+        // Tipo de usuario (rol)
+        _userType = (personaData is Map ? personaData['rol']?.toString() : null)
+            ?? (userData is Map ? userData['role']?.toString() : null)
+            ?? data['userType']?.toString()
+            ?? userType;
+
+        // IDs capturados del payload
+        final String? idPersona =
+            (personaData is Map ? (personaData['id_persona']?.toString() ?? personaData['idPersona']?.toString()) : null)
+            ?? (userData is Map ? (userData['id_persona']?.toString() ?? userData['idPersona']?.toString()) : null)
+            ?? data['id_persona']?.toString()
+            ?? data['idPersona']?.toString()
+            ?? data['persona_id']?.toString()
+            ?? data['personaId']?.toString();
+
+        final String? idGenerico =
+            (userData is Map ? (userData['id']?.toString() ?? userData['userId']?.toString()) : null)
+            ?? data['id']?.toString()
+            ?? data['userId']?.toString();
+
+        // Elegir SIEMPRE id_persona si existe
+        _userId = idPersona ?? idGenerico;
+
+        // Si no hay userId utilizable, abortar
+        if (_userId == null || _userId!.isEmpty) {
+          return false;
+        }
         // Extraer userType - incluir también 'rol' del backend
         _userType = (data is Map)
             ? (data['userType'] ?? data['role'] ?? data['rol'] ?? data['user_type'] ?? data['type'])
@@ -86,18 +120,18 @@ class AuthService {
         _userId = (data is Map) ? (data['id_persona']?.toString() ?? data['idPersona']?.toString() ?? data['userId']?.toString() ?? data['id']?.toString() ?? data['user_id']?.toString()) : null;
         
         // Si data contiene un objeto user/usuario anidado, buscar ahí también
-        final userData = (data is Map) ? (data['user'] ?? data['usuario']) : null;
-        if (userData != null) {
-          print('📊 AuthService: Datos de usuario anidados: $userData');
-          if (userData is Map) {
-            _userType = _userType ?? userData['userType'] ?? userData['role'] ?? userData['rol'] ?? userData['user_type'] ?? userData['type'];
-            _authToken = _authToken ?? userData['token'] ?? userData['access_token'];
+        final userDataNested = (data is Map) ? (data['user'] ?? data['usuario']) : null;
+        if (userDataNested != null) {
+          print('📊 AuthService: Datos de usuario anidados: $userDataNested');
+          if (userDataNested is Map) {
+            _userType = _userType ?? userDataNested['userType'] ?? userDataNested['role'] ?? userDataNested['rol'] ?? userDataNested['user_type'] ?? userDataNested['type'];
+            _authToken = _authToken ?? userDataNested['token'] ?? userDataNested['access_token'];
             // PRIORIZAR id_persona sobre id
-            _userId = _userId ?? userData['id_persona']?.toString() ?? userData['idPersona']?.toString() ?? userData['userId']?.toString() ?? userData['id']?.toString() ?? userData['user_id']?.toString();
+            _userId = _userId ?? userDataNested['id_persona']?.toString() ?? userDataNested['idPersona']?.toString() ?? userDataNested['userId']?.toString() ?? userDataNested['id']?.toString() ?? userDataNested['user_id']?.toString();
             
             // Extraer el rol y el idPersona del objeto persona anidado
-            if (userData['persona'] != null && userData['persona'] is Map) {
-              final personaData = Map<String, dynamic>.from(userData['persona']);
+            if (userDataNested['persona'] != null && userDataNested['persona'] is Map) {
+              final personaData = Map<String, dynamic>.from(userDataNested['persona']);
               print('👤 AuthService: Datos de persona: $personaData');
               _userType = _userType ?? personaData['rol'];
               // CRÍTICO: tomar idPersona para usar /api/cursosPersonas/{idPersona}

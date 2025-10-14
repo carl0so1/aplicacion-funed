@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/services/api_service.dart';
+import 'package:flutter_application_1/services/auth_service.dart';
 
-class CoursesSection extends StatelessWidget {
+class CoursesSection extends StatefulWidget {
   final List<Map<String, dynamic>> courses;
   final Function(Map<String, dynamic>) onViewCourse;
   final String userType;
@@ -13,7 +15,106 @@ class CoursesSection extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<CoursesSection> createState() => _CoursesSectionState();
+}
+
+class _CoursesSectionState extends State<CoursesSection> {
+  List<Map<String, dynamic>> _courses = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _courses = List<Map<String, dynamic>>.from(widget.courses);
+    // Si no hay cursos cargados, consumir el endpoint correspondiente según el tipo de usuario
+    if (_courses.isEmpty) {
+      if (widget.userType.toLowerCase() == 'estudiante') {
+        _loadCoursesFromApi();
+      } else if (widget.userType.toLowerCase() == 'docente') {
+        _loadTeacherCoursesFromApi();
+      }
+    }
+  }
+
+  Future<void> _loadCoursesFromApi() async {
+    try {
+      final userId = AuthService.userId;
+      if (userId == null || userId.isEmpty) {
+        // Sin id_persona no podemos consultar
+        return;
+      }
+      final res = await ApiService.getCoursesByPersonId(userId);
+      if (res['success'] == true) {
+        final data = res['data'];
+        List<Map<String, dynamic>> rawCourses = [];
+        if (data is List) {
+          rawCourses = List<Map<String, dynamic>>.from(data);
+        } else if (data is Map) {
+          // Intentar extraer lista desde varias posibles claves
+          final candidateKeys = [
+            'cursos', 'courses', 'data', 'result', 'records', 'items',
+            'cursosPersonas', 'lista', 'rows'
+          ];
+          for (final key in candidateKeys) {
+            final value = data[key];
+            if (value is List) {
+              rawCourses = List<Map<String, dynamic>>.from(value);
+              break;
+            }
+          }
+        }
+
+        final mapped = rawCourses.map<Map<String, dynamic>>(_mapCourseData).toList();
+        if (!mounted) return;
+        setState(() {
+          _courses = mapped;
+        });
+      }
+    } catch (e) {
+      // Silencioso: mantenemos la UI sin cambios si falla
+    }
+  }
+
+  Map<String, dynamic> _mapCourseData(Map<String, dynamic> apiCourse) {
+    // Estructura cursosPersonas con idMatricula
+    if (apiCourse.containsKey('idMatricula')) {
+      return {
+        'id': apiCourse['idCurso']?.toString() ?? apiCourse['id']?.toString(),
+        'nombre': apiCourse['nombre']?.toString() ?? 'Sin nombre',
+        'codigo': apiCourse['codigo']?.toString() ?? apiCourse['idCurso']?.toString() ?? 'N/A',
+        'duracion': apiCourse['duracion'],
+        'temario': apiCourse['temario']?.toString() ?? '',
+        'tipo_curso': apiCourse['tipo']?.toString() ?? '',
+        'idOferta': apiCourse['idOferta']?.toString(),
+        'idMatricula': apiCourse['idMatricula']?.toString(),
+        'color': Colors.blue,
+        'progreso': 0,
+        'semestre': 'Actual',
+      };
+    }
+
+    // Mapeo genérico en caso de otras estructuras
+    return {
+      'id': apiCourse['id']?.toString(),
+      'nombre': apiCourse['nombre_curso']?.toString() ?? apiCourse['nombre']?.toString() ?? 'Sin nombre',
+      'codigo': apiCourse['codigo']?.toString() ?? apiCourse['id']?.toString() ?? 'N/A',
+      'duracion': apiCourse['duracion'],
+      'temario': apiCourse['temario']?.toString() ?? '',
+      'tipo_curso': apiCourse['tipo_curso']?.toString() ?? apiCourse['tipo']?.toString() ?? '',
+      'fechaInicio': apiCourse['fechaInicio']?.toString() ?? '',
+      'fechaFin': apiCourse['fechaFin']?.toString() ?? '',
+      'horario': apiCourse['horario']?.toString() ?? '',
+      'precio': apiCourse['precio']?.toString() ?? '',
+      'cupos': apiCourse['cupos'],
+      'color': Colors.cyan,
+      'progreso': 0,
+      'totalEstudiantes': 0,
+      'tareasPendientes': 0,
+    };
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final courses = _courses;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -28,7 +129,6 @@ class CoursesSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          
           if (courses.isEmpty)
             const Center(
               child: Text(
@@ -56,7 +156,7 @@ class CoursesSection extends StatelessWidget {
                     contentPadding: const EdgeInsets.all(16),
                     leading: CircleAvatar(
                       backgroundColor: course['color'] ?? Colors.cyan,
-                      child: Icon(
+                      child: const Icon(
                         Icons.book,
                         color: Colors.white,
                       ),
@@ -101,8 +201,7 @@ class CoursesSection extends StatelessWidget {
                             ),
                           ),
                         const SizedBox(height: 4),
-                        // Información específica para estudiantes
-                        if (userType.toLowerCase() == 'estudiante') ...[
+                        if (widget.userType.toLowerCase() == 'estudiante') ...[
                           if (course['progreso'] != null) ...[
                             const SizedBox(height: 8),
                             Row(
@@ -138,8 +237,7 @@ class CoursesSection extends StatelessWidget {
                               ),
                             ),
                         ],
-                        // Información específica para docentes
-                        if (userType.toLowerCase() == 'docente') ...[
+                        if (widget.userType.toLowerCase() == 'docente') ...[
                           Row(
                             children: [
                               Expanded(
@@ -193,7 +291,7 @@ class CoursesSection extends StatelessWidget {
                       ],
                     ),
                     trailing: ElevatedButton(
-                      onPressed: () => onViewCourse(course),
+                      onPressed: () => widget.onViewCourse(course),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: course['color'] ?? Colors.cyan,
                         foregroundColor: Colors.white,
@@ -202,7 +300,7 @@ class CoursesSection extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        userType.toLowerCase() == 'estudiante' ? 'Ver curso' : 'Gestionar',
+                        widget.userType.toLowerCase() == 'estudiante' ? 'Ver curso' : 'Gestionar',
                       ),
                     ),
                   ),
@@ -212,5 +310,44 @@ class CoursesSection extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _loadTeacherCoursesFromApi() async {
+    try {
+      final userId = AuthService.userId;
+      if (userId == null || userId.isEmpty) {
+        // Sin id_persona no podemos consultar
+        return;
+      }
+      final res = await ApiService.getTeacherCoursesByPersonId(userId);
+      if (res['success'] == true) {
+        final data = res['data'];
+        List<Map<String, dynamic>> rawCourses = [];
+        if (data is List) {
+          rawCourses = List<Map<String, dynamic>>.from(data);
+        } else if (data is Map) {
+          // Intentar extraer lista desde varias posibles claves
+          final candidateKeys = [
+            'cursos', 'courses', 'data', 'result', 'records', 'items',
+            'ofertaCursos', 'ofertas', 'lista', 'rows'
+          ];
+          for (final key in candidateKeys) {
+            final value = data[key];
+            if (value is List) {
+              rawCourses = List<Map<String, dynamic>>.from(value);
+              break;
+            }
+          }
+        }
+
+        final mapped = rawCourses.map<Map<String, dynamic>>(_mapCourseData).toList();
+        if (!mounted) return;
+        setState(() {
+          _courses = mapped;
+        });
+      }
+    } catch (e) {
+      // Silencioso: mantenemos la UI sin cambios si falla
+    }
   }
 }

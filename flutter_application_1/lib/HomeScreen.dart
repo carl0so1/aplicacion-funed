@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 // Servicios
 import 'services/api_service.dart';
@@ -6,7 +7,7 @@ import 'services/auth_service.dart';
 
 // Pantallas
 import 'CourseDetailScreen.dart';
-// import 'AdminCoursesScreen.dart';
+import 'AdminCoursesScreen.dart';
 
 // Componentes compartidos
 import 'components/shared/BottomNavBar.dart';
@@ -34,7 +35,7 @@ class HomeScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -389,7 +390,10 @@ class _HomeScreenState extends State<HomeScreen> {
         'temario': (apiCourse['temario'] ?? '').toString(),
         'tipo_curso': (apiCourse['tipo'] ?? apiCourse['tipo_curso'] ?? '').toString(),
         // Nuevos campos para enlazar endpoints por oferta y matrícula
-        'idOferta': apiCourse['idOferta']?.toString(),
+        'idOferta': apiCourse['idOferta']?.toString()
+            ?? apiCourse['idCursoOferta']?.toString()
+            ?? apiCourse['id_oferta_curso']?.toString()
+            ?? apiCourse['id_oferta']?.toString(),
         'idMatricula': apiCourse['idMatricula']?.toString(),
         // Atributos de UI
         'color': Colors.blue,
@@ -407,12 +411,12 @@ class _HomeScreenState extends State<HomeScreen> {
       'nombre': _extractCourseName(apiCourse),
       'codigo': (apiCourse['codigo'] ?? apiCourse['codigo_curso'] ?? apiCourse['id'] ?? apiCourse['idCurso'] ?? 'N/A').toString(),
       'duracion': apiCourse['duracion'],
-      'temario': (apiCourse['temario'] ?? '').toString(),
-      'tipo_curso': (apiCourse['tipo_curso'] ?? apiCourse['tipo'] ?? '').toString(),
-      'fechaInicio': (apiCourse['fecha_inicio_curso'] ?? apiCourse['fechaInicio'] ?? apiCourse['inicio'] ?? '').toString(),
-      'fechaFin': (apiCourse['fecha_fin_curso'] ?? apiCourse['fechaFin'] ?? apiCourse['fin'] ?? '').toString(),
-      'horario': (apiCourse['horario'] ?? '').toString(),
-      'precio': (apiCourse['precio'] ?? '').toString(),
+      'temario': apiCourse['temario']?.toString() ?? '',
+      'tipo_curso': apiCourse['tipo_curso']?.toString() ?? '',
+      'fechaInicio': apiCourse['fechaInicio']?.toString() ?? '',
+      'fechaFin': apiCourse['fechaFin']?.toString() ?? '',
+      'horario': apiCourse['horario']?.toString() ?? '',
+      'precio': apiCourse['precio']?.toString() ?? '',
       'cupos': apiCourse['cupos'],
       'color': Colors.cyan,
       'progreso': 0,
@@ -440,143 +444,91 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadCourses() async {
-    try {
-      // Verificar que tenemos un token de autenticación
-      if (AuthService.authToken == null) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No hay sesión activa. Por favor, inicia sesión nuevamente.')),
-          );
-        }
-        return;
-      }
-
-      // Determinar el tipo de usuario efectivo desde AuthService (si existe)
-      final backendUserType = AuthService.userType;
-      final effectiveUserType = backendUserType?.toLowerCase() ?? widget.userType.toLowerCase();
-      print('Cargando cursos. userType (ruta): ${widget.userType} | userType (backend): ${backendUserType ?? 'desconocido'} | efectivo: $effectiveUserType');
-
-      if (backendUserType != null && backendUserType.toLowerCase() != widget.userType.toLowerCase()) {
-        print('⚠️ Desajuste de roles: ruta=${widget.userType} vs backend=$backendUserType');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Aviso: tu rol real es "$backendUserType". Usando ese rol para cargar cursos.')),
-          );
-        }
-      }
-
-      Map<String, dynamic> result;
-
-      // Solo considerar docente cuando el rol efectivo es exactamente 'docente'
-      if (effectiveUserType != 'docente') {
-        // ROL ESTUDIANTE (predeterminado)
-        final userId = AuthService.userId;
-        print('🔐 Auth userId: $userId');
-        if (userId != null && userId.isNotEmpty) {
-          print('🆔 Usando endpoint cursosPersonas con ID: $userId');
-          result = await ApiService.getCoursesByPersonId(userId);
-        } else {
-          print('⚠️ No se encontró userId, usando endpoint por defecto /api/cursos');
-          result = await ApiService.getCoursesByStudent();
-        }
-      } else {
-        // ROL DOCENTE
-        final userId = AuthService.userId;
-        print('🔐 Auth docente userId: $userId');
-        if (userId != null && userId.isNotEmpty) {
-          print('👨‍🏫 Usando endpoint ofertaCursos/docente con ID: $userId');
-          result = await ApiService.getTeacherCoursesByPersonId(userId);
-        } else {
-          print('❌ No se encontró idPersona para docente; no se permitirá cargar cursos de estudiante');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('No se puede cargar cursos de docente: falta idPersona')),
-            );
-          }
-          setState(() { _isLoading = false; });
-          return;
-        }
-      }
-
-      print('Resultado de la API (success=${result['success']}): ${result['data']?.runtimeType}');
-
-      if (mounted) {
-        if (result['success'] == true) {
-          final raw = result['data'];
-          var rawCourses = _extractCoursesList(raw);
-
-          // Fallback: si eres estudiante y cursosPersonas no devuelve elementos, probar /api/cursos
-          if (effectiveUserType == 'estudiante' && rawCourses.isEmpty) {
-            print('🔁 Fallback: cursosPersonas vacío, intentando /api/cursos');
-            final fallback = await ApiService.getCoursesByStudent();
-            if (fallback['success'] == true) {
-              final rawFallback = fallback['data'];
-              final extractedFallback = _extractCoursesList(rawFallback);
-              if (extractedFallback.isNotEmpty) {
-                print('✅ Fallback cargó ${extractedFallback.length} cursos');
-                rawCourses = extractedFallback;
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Mostrando catálogo general de cursos')),
-                  );
-                }
-              } else {
-                print('⚠️ Fallback /api/cursos también vacío');
-              }
-            } else {
-              print('⚠️ Fallback /api/cursos falló: ${fallback['message']}');
-            }
-          }
-
-          // Fallback: si eres docente y /api/cursos/docente no devuelve elementos
-          if (effectiveUserType == 'docente' && rawCourses.isEmpty) {
-            print('ℹ️ Docente sin cursos asignados; no se mostrará catálogo de estudiante por políticas de rol');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('No tienes cursos asignados como docente.')),
-              );
-            }
-          }
-
-          final mappedCourses = rawCourses.map((course) => _mapCourseData(course)).toList();
-
-          setState(() {
-            _courses = mappedCourses;
-            _currentCourse = _courses.isNotEmpty ? _courses.first : null;
-            _isLoading = false;
-          });
-          print('✅ Cursos cargados: ${_courses.length}');
-
-          if (_courses.isEmpty) {
-            final keysInfo = (raw is Map) ? raw.keys.join(', ') : 'payload no es Map';
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('No se encontraron cursos. Llaves en payload: $keysInfo')),
-            );
-          }
-        } else {
-          setState(() {
-            _isLoading = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error del servidor: ${result['message'] ?? 'Error desconocido'}')),
-          );
-        }
-      }
-    } catch (e) {
-      print('Error al cargar cursos: $e');
+  try {
+    // Verificar que tenemos un token de autenticación
+    if (AuthService.authToken == null) {
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar cursos: $e')),
+          const SnackBar(content: Text('No hay sesión activa. Por favor, inicia sesión nuevamente.')),
+        );
+      }
+      return;
+    }
+
+    print('Cargando cursos para tipo de usuario: ${widget.userType}');
+    
+    Map<String, dynamic> result;
+    
+    if (widget.userType.toLowerCase() == 'estudiante') {
+      // Usar el nuevo endpoint con ID de persona si está disponible
+      final userId = AuthService.userId;
+      if (userId != null && userId.isNotEmpty) {
+        print('🆔 Usando endpoint cursosPersonas con ID: $userId');
+        result = await ApiService.getCoursesByPersonId(userId);
+      } else {
+        print('⚠️ No se encontró userId, usando endpoint por defecto');
+        result = await ApiService.getCoursesByStudent();
+      }
+    } else if (widget.userType.toLowerCase() == 'docente') {
+      // Usar el nuevo endpoint específico para docentes con ID de persona
+      final userId = AuthService.userId;
+      if (userId != null && userId.isNotEmpty) {
+        print('👨‍🏫 Usando endpoint ofertaCursos/docente con ID: $userId');
+        result = await ApiService.getTeacherCoursesByPersonId(userId);
+      } else {
+        print('⚠️ No se encontró userId para docente, usando endpoint por defecto');
+        result = await ApiService.getCoursesByTeacher();
+      }
+    } else {
+      result = await ApiService.getCoursesByTeacher();
+    }
+    
+    print('Resultado de la API: $result');
+    
+    if (mounted) {
+      if (result['success'] == true) {
+        // Mapear los datos de la API al formato esperado
+        List<Map<String, dynamic>> rawCourses;
+        
+        // Verificar si la respuesta tiene estructura de cursosPersonas
+        if (result['data'] is Map && result['data']['cursos'] != null) {
+          rawCourses = List<Map<String, dynamic>>.from(result['data']['cursos'] ?? []);
+        } else {
+          rawCourses = List<Map<String, dynamic>>.from(result['data'] ?? []);
+        }
+        
+        final mappedCourses = rawCourses.map((course) => _mapCourseData(course)).toList();
+        
+        setState(() {
+          _courses = mappedCourses;
+          _currentCourse = _courses.isNotEmpty ? _courses.first : null;
+          _isLoading = false;
+        });
+        print('Cursos cargados: ${_courses.length}');
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error del servidor: ${result['message'] ?? 'Error desconocido'}')),
         );
       }
     }
+  } catch (e) {
+    print('Error al cargar cursos: $e');
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar cursos: $e')),
+      );
+    }
   }
+}
 
   void _onItemTapped(int index) {
     setState(() {
@@ -588,92 +540,132 @@ class _HomeScreenState extends State<HomeScreen> {
     LogoutDialog.show(context);
   }
 
-  void _verCurso(Map<String, dynamic> course) async {
-    try {
-      final courseId = course['id']?.toString();
-      final idOfertaCurso = course['idOferta']?.toString();
-      if ((courseId == null || courseId.isEmpty) && (idOfertaCurso == null || idOfertaCurso.isEmpty)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se encontró identificador del curso (id o idOferta).')),
-        );
-        return;
-      }
-
-      // Pre-cargar módulos y contenido de apoyo por idOferta si disponible
-      List<Map<String, dynamic>> modules = [];
-      List<Map<String, dynamic>> supportContent = [];
-      final idOferta = course['idOferta']?.toString();
-      if (idOferta != null && idOferta.isNotEmpty) {
-        final modulesResult = await ApiService.getModulesByOffer(idOferta);
-        if (modulesResult['success'] == true) {
-          final raw = modulesResult['data'];
-          if (raw is List) {
-            modules = List<Map<String, dynamic>>.from(raw.map((m) => {
-                      'title': (m['nombre'] ?? m['titulo'] ?? 'Módulo').toString(),
-                      'description': (m['descripcion'] ?? '').toString(),
-                      'duration': (m['duracion'] ?? '').toString(),
-                      'completed': false,
-                    }));
-          }
-        }
-
-        final contentResult = await ApiService.getSupportContentByOffer(idOferta);
-        if (contentResult['success'] == true) {
-          final raw = contentResult['data'];
-          if (raw is List) {
-            supportContent = List<Map<String, dynamic>>.from(raw.map((c) => {
-                      'id': (c['id'] ?? DateTime.now().millisecondsSinceEpoch).toString(),
-                      'title': (c['titulo'] ?? c['nombre'] ?? 'Recurso').toString(),
-                      'type': (c['tipo'] ?? 'Archivo').toString(),
-                      'size': (c['tamano'] ?? '').toString(),
-                      'downloads': (c['descargas'] ?? 0),
-                      'filePath': (c['archivo'] ?? c['url'] ?? '').toString(),
-                      'uploadDate': (c['fechaSubida'] ?? c['fecha'] ?? '' ).toString(),
-                      'description': (c['descripcion'] ?? '').toString(),
-                      'tags': List<String>.from((c['tags'] ?? []) as List? ?? []),
-                    }));
-          }
-        }
-      }
-
-      final courseDetails = (idOfertaCurso != null && idOfertaCurso.isNotEmpty)
-          ? await (() async {
-              debugPrint('🔗 Detalle vía oferta: idOferta=$idOfertaCurso');
-              final res = await ApiService.getOfferCourseDetails(idOfertaCurso);
-              debugPrint('✅ Respuesta detalle oferta (success=${res['success']})');
-              return res;
-            })()
-          : await (() async {
-              debugPrint('🔗 Detalle vía courseId: id=$courseId');
-              final res = await ApiService.getCourseDetails(courseId!);
-              debugPrint('✅ Respuesta detalle curso (success=${res['success']})');
-              return res;
-            })();
-      if (!mounted) return;
-
-      // Unir información del curso con datos precargados
-      final Map<String, dynamic> mergedCourseInfo = {
-        ...course,
-        ...(courseDetails['data'] is Map
-            ? Map<String, dynamic>.from(courseDetails['data'])
-            : {}),
-        'modulesData': modules,
-        'supportContentData': supportContent,
-      };
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CourseDetailScreen(
-            courseInfo: mergedCourseInfo,
-            // Usar la modalidad de visualización (override) si está activa
-            userType: (_uiRoleOverride ?? widget.userType),
-          ),
-        ),
-      );
-    } catch (e) {
+void _verCurso(Map<String, dynamic> course) async {
+  try {
+    final courseId = course['id']?.toString() ?? '';
+    if (courseId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error abriendo curso: $e')),
+        const SnackBar(content: Text('ID del curso no válido')),
+      );
+      return;
+    }
+  
+    // Pre-cargar módulos y contenido de apoyo por idOferta si disponible
+    List<Map<String, dynamic>> modules = [];
+    List<Map<String, dynamic>> supportContent = [];
+    final idOferta = course['idOferta']?.toString();
+    if (idOferta != null && idOferta.isNotEmpty) {
+      final modulesResult = await ApiService.getModulesByOffer(idOferta);
+      if (modulesResult['success'] == true) {
+        final raw = modulesResult['data'];
+        if (raw is List) {
+          modules = List<Map<String, dynamic>>.from(raw.map((m) => {
+                    'title': (m['nombre'] ?? m['titulo'] ?? 'Módulo').toString(),
+                    'description': (m['descripcion'] ?? '').toString(),
+                    'duration': (m['duracion'] ?? '').toString(),
+                    'completed': false,
+                  }));
+        }
+      }
+  
+      final contentResult = await ApiService.getSupportContentByOffer(idOferta);
+      if (contentResult['success'] == true) {
+        final raw = contentResult['data'];
+        if (raw is List) {
+          supportContent = List<Map<String, dynamic>>.from(raw.map((c) => {
+                    'id': (c['id'] ?? DateTime.now().millisecondsSinceEpoch).toString(),
+                    'title': (c['titulo'] ?? c['nombre'] ?? 'Recurso').toString(),
+                    'type': (c['tipo'] ?? 'Archivo').toString(),
+                    'size': (c['tamano'] ?? '').toString(),
+                    'downloads': (c['descargas'] ?? 0),
+                    'filePath': (c['archivo'] ?? c['url'] ?? '').toString(),
+                    'uploadDate': (c['fechaSubida'] ?? c['fecha'] ?? '' ).toString(),
+                    'description': (c['descripcion'] ?? '').toString(),
+                    'tags': List<String>.from((c['tags'] ?? []) as List? ?? []),
+                  }));
+        }
+      }
+    }
+  
+    final courseDetails = await ApiService.getCourseDetails(courseId);
+    if (!mounted) return;
+  
+    // Unir información del curso con datos precargados
+    final Map<String, dynamic> mergedCourseInfo = {
+      ...course,
+      ...(courseDetails['data'] is Map
+          ? Map<String, dynamic>.from(courseDetails['data'])
+          : {}),
+      'modulesData': modules,
+      'supportContentData': supportContent,
+    };
+  
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CourseDetailScreen(
+          courseInfo: mergedCourseInfo,
+          userType: widget.userType,
+        ),
+      ),
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al cargar los detalles del curso: $e')),
+    );
+  }
+}
+
+Widget _buildBody() {
+  if (_isLoading) {
+    return const Center(
+      child: CircularProgressIndicator(
+        color: Colors.white,
+      ),
+    );
+  }
+
+  switch (_selectedIndex) {
+    case 0:
+      return HomeContent(
+        userType: widget.userType,
+        userName: widget.userName,
+        currentCourse: _currentCourse,
+        onViewCourse: _verCurso,
+      );
+    case 1:
+      return CoursesSection(
+        userType: widget.userType,
+        onViewCourse: _verCurso,
+        courses: _courses,
+      );
+    case 2:
+      return const CalendarSection();
+    case 3:
+      return ProfileSection(
+        userName: widget.userName,
+        userType: widget.userType,
+        userEmail: 'user@example.com',
+        onLogout: _cerrarSesion,
+      );
+    case 4:
+      // Solo mostrar AdminCoursesScreen si el usuario es docente
+      if (widget.userType.toLowerCase() == 'docente') {
+        return const AdminCoursesScreen();
+      }
+      return HomeContent(
+        userType: widget.userType,
+        userName: widget.userName,
+        currentCourse: _currentCourse,
+        onViewCourse: _verCurso,
+      );
+    default:
+      return HomeContent(
+        userType: widget.userType,
+        userName: widget.userName,
+        currentCourse: _currentCourse,
+        onViewCourse: _verCurso,
       );
     }
   }

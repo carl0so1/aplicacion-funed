@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'services/auth_service.dart';
 
 class LoginScreen extends StatelessWidget {
+  LoginScreen({Key? key}) : super(key: key);
   // Controladores para los campos de texto
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -149,13 +150,13 @@ class LoginScreen extends StatelessWidget {
                 // ---------- Campo correo ----------
                 TextField(
                   controller: emailController,
-                  style: TextStyle(color: Colors.blue),
+                  style: const TextStyle(color: Colors.blue),
                   decoration: const InputDecoration(
                     labelText: 'Correo electrónico',
-                    labelStyle: TextStyle(color: Colors.blue),
+                    labelStyle: const TextStyle(color: Colors.blue),
                     filled: true,
                     fillColor: Colors.white,
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -163,13 +164,13 @@ class LoginScreen extends StatelessWidget {
                 // ---------- Campo contraseña ----------
                 TextField(
                   controller: passwordController,
-                  style: TextStyle(color: Colors.blue),
+                  style: const TextStyle(color: Colors.blue),
                   decoration: const InputDecoration(
                     labelText: 'Contraseña',
-                    labelStyle: TextStyle(color: Colors.blue),
+                    labelStyle: const TextStyle(color: Colors.blue),
                     filled: true,
                     fillColor: Colors.white,
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                   obscureText: true,
                 ),
@@ -184,7 +185,7 @@ class LoginScreen extends StatelessWidget {
                     },
                     child: const Text(
                       '¿Olvidaste tu contraseña?',
-                      style: TextStyle(color: Colors.blue),
+                      style: const TextStyle(color: Colors.blue),
                     ),
                   ),
                 ),
@@ -208,8 +209,7 @@ class LoginScreen extends StatelessWidget {
                 // ---------- Alternativas de login ----------
                 const Text(
                   'o continúa con',
-                  style: TextStyle(color: Colors.blue
-                  ),
+                  style: const TextStyle(color: Colors.blue),
                 ),
                 const SizedBox(height: 10),
                 Row(
