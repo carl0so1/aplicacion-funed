@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
+import 'components/dialogs/TeacherHoursDialog.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final Map<String, dynamic> courseInfo;
@@ -190,6 +191,40 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   ],
                 ),
                 if (widget.userType == 'estudiante') ...[
+                  SizedBox(height: 15),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          _contactTeacher();
+                        },
+                        icon: Icon(Icons.email, size: 18),
+                        label: Text('Contactar Docente'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          _showTeacherSchedule();
+                        },
+                        icon: Icon(Icons.schedule, size: 18),
+                        label: Text('Ver Horarios'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   SizedBox(height: 15),
                   Text(
                     'Progreso del Curso',
@@ -2037,6 +2072,144 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         );
       },
     );
+  }
+
+  void _contactTeacher() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: Text(
+            'Contactar Docente',
+            style: TextStyle(color: Color(0xFF2B1A7F)),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Profesor: ${widget.courseInfo['profesor'] ?? 'Por asignar'}'),
+              SizedBox(height: 10),
+              Text('Puedes contactar al docente a través de:'),
+              SizedBox(height: 15),
+              ListTile(
+                leading: Icon(Icons.email, color: Colors.blue),
+                title: Text('Correo electrónico'),
+                subtitle: Text('profesor@funed.edu'),
+                onTap: () {
+                  // Implementar envío de email
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Abriendo cliente de correo...'),
+                      backgroundColor: Colors.blue,
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.message, color: Colors.green),
+                title: Text('Mensaje interno'),
+                subtitle: Text('Enviar mensaje a través de la plataforma'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showMessageDialog();
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showMessageDialog() {
+    final TextEditingController messageController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: Text(
+            'Enviar Mensaje',
+            style: TextStyle(color: Color(0xFF2B1A7F)),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Para: ${widget.courseInfo['profesor'] ?? 'Docente'}'),
+              SizedBox(height: 15),
+              TextField(
+                controller: messageController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: 'Escribe tu mensaje...',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (messageController.text.trim().isNotEmpty) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Mensaje enviado correctamente'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF2B1A7F),
+              ),
+              child: Text('Enviar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showTeacherSchedule() {
+    final teacherData = {
+      'nombre': widget.courseInfo['profesor'] ?? 'Docente',
+      'horarios': [
+        {
+          'dia': 'Lunes',
+          'hora_inicio': '08:00',
+          'hora_fin': '10:00',
+        },
+        {
+          'dia': 'Miércoles',
+          'hora_inicio': '14:00',
+          'hora_fin': '16:00',
+        },
+        {
+          'dia': 'Viernes',
+          'hora_inicio': '10:00',
+          'hora_fin': '12:00',
+        },
+      ],
+      'horas_totales': widget.courseInfo['horas_totales'] ?? 'N/A',
+      'horas_completadas': widget.courseInfo['horas_completadas'] ?? 'N/A',
+    };
+    
+    TeacherHoursDialog.show(context, teacherData);
   }
 }
 

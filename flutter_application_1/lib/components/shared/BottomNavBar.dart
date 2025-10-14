@@ -33,15 +33,15 @@ class BottomNavBar extends StatelessWidget {
       ),
     ];
 
-    // Solo agregar la pestaña Admin si el usuario es docente
-    if (userType?.toLowerCase() == 'docente') {
-      items.add(
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.admin_panel_settings),
-          label: 'Admin',
-        ),
-      );
-    }
+    // Admin tab eliminada para docentes (no se mostrará pestaña Admin)
+    // if (userType?.toLowerCase() == 'docente') {
+    //   items.add(
+    //     const BottomNavigationBarItem(
+    //       icon: Icon(Icons.admin_panel_settings),
+    //       label: 'Admin',
+    //     ),
+    //   );
+    // }
 
     return BottomNavigationBar(
       items: items,

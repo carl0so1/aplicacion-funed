@@ -76,18 +76,70 @@ class ApiService {
       final token = AuthService.authToken;
       print('🎓 Obteniendo cursos para persona ID: $personId');
       print('🔑 Token: ${token?.substring(0, 20)}...');
-      
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/cursosPersonas/$personId'),
-        headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
-      );
 
-      print('📡 getCoursesByPersonId status: ${response.statusCode}');
-      print('📡 getCoursesByPersonId body: ${response.body}');
+      // Lista de rutas candidatas para entornos con variaciones en el path
+      final candidatePaths = [
+        '/api/cursosPersonas/$personId',
+        '/api/cursos/persona/$personId',
+        '/api/matriculas/persona/$personId',
+        '/api/cursosPersona/$personId',
+        '/api/cursos-persona/$personId',
+      ];
 
-      return _processResponse(response);
+      Map<String, dynamic>? lastError;
+
+      for (final path in candidatePaths) {
+        final url = Uri.parse('$baseUrl$path');
+        print('➡️ GET intento: $url');
+        try {
+          final response = await http.get(
+            url,
+            headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
+          );
+
+          print('📡 getCoursesByPersonId (${path}) status: ${response.statusCode}');
+          print('📡 getCoursesByPersonId (${path}) body: ${response.body}');
+
+          if (response.statusCode >= 200 && response.statusCode < 300) {
+            // Procesar y devolver inmediatamente el éxito
+            return _processResponse(response);
+          } else {
+            // Guardar último error para diagnóstico
+            lastError = {
+              'success': false,
+              'message': 'Error ${response.statusCode} en $path',
+              'details': response.body,
+            };
+          }
+        } catch (e) {
+          print('❌ Error en intento $path: $e');
+          lastError = {'success': false, 'message': 'Error de conexión en $path: $e'};
+        }
+      }
+
+      // Si ninguno funcionó, devolver el último error capturado
+      return lastError ?? {'success': false, 'message': 'No se pudo obtener cursos para la persona'};
     } catch (e) {
       print('❌ Error en getCoursesByPersonId: $e');
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getTeacherCoursesByPersonId(String idPersona) async {
+    try {
+      final token = AuthService.authToken;
+      final path = '/api/ofertaCursos/docente/$idPersona';
+      final url = Uri.parse('$baseUrl$path');
+      print('➡️ GET: $url');
+      final response = await http.get(
+        url,
+        headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
+      );
+      print('📡 getTeacherCoursesByPersonId (${path}) status: ${response.statusCode}');
+      print('📡 getTeacherCoursesByPersonId (${path}) body: ${response.body}');
+      return _processResponse(response);
+    } catch (e) {
+      print('❌ Error en getTeacherCoursesByPersonId: $e');
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
@@ -165,6 +217,22 @@ class ApiService {
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
 
+      return _processResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  // Nuevo: detalles de oferta de curso por id_oferta_curso (válido para cualquier rol)
+  static Future<Map<String, dynamic>> getOfferCourseDetails(String idOfertaCurso) async {
+    try {
+      final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/ofertaCursos/$idOfertaCurso');
+      print('➡️ GET: $url');
+      final response = await http.get(
+        url,
+        headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
+      );
       return _processResponse(response);
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
@@ -379,10 +447,9 @@ class ApiService {
       };
     }
   }
-}
 
   // --- Endpoints de Render especificados ---
-
+  
   // Módulos por oferta
   static Future<Map<String, dynamic>> getModulesByOffer(String idOferta) async {
     try {

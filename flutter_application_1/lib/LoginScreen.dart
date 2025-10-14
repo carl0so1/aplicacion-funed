@@ -47,19 +47,52 @@ class LoginScreen extends StatelessWidget {
     Navigator.of(context).pop();
 
     if (success) {
+      // Tomar el rol real EXCLUSIVAMENTE desde el backend
+      final backendRole = (AuthService.userType ?? '').toLowerCase();
+      final selectedRole = role.toLowerCase();
+
+      // Si el backend no devolvió rol, no permitir avanzar
+      if (backendRole.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo determinar tu rol desde el backend. Intenta nuevamente.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        await AuthService.logout();
+        Navigator.pushReplacementNamed(context, '/chooseAccount');
+        return;
+      }
+
+      // Enforzar: si no coincide, NO permitir avanzar a Home
+      if (backendRole != selectedRole) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tu cuenta es "$backendRole". Por favor ingresa desde la opción correspondiente.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        // Limpiar sesión para evitar entrar con rol incorrecto
+        await AuthService.logout();
+        // Redirigir a selección de cuenta
+        Navigator.pushReplacementNamed(context, '/chooseAccount');
+        return;
+      }
+
+      final userLabel = backendRole == 'docente' ? 'docente' : 'estudiante';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('¡Bienvenido ${role == 'docente' ? 'docente' : 'estudiante'}, $email!'),
+          content: Text('¡Bienvenido $userLabel, $email!'),
           backgroundColor: Colors.green,
         ),
       );
 
-      // Navegar a la pantalla principal
+      // Navegar a la pantalla principal usando el rol validado
       Navigator.pushReplacementNamed(
-        context, 
+        context,
         '/home',
         arguments: {
-          'userType': role,
+          'userType': backendRole,
           'userName': email.contains('@') ? email.split('@')[0] : email,
         },
       );

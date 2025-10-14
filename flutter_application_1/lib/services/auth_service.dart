@@ -59,39 +59,63 @@ class AuthService {
         final data = response['data'];
         print('📊 AuthService: Data recibida: $data');
         print('📊 AuthService: Estructura completa de data: ${data.runtimeType}');
-        print('📊 AuthService: Keys disponibles en data: ${data.keys}');
+        if (data is Map) {
+          print('📊 AuthService: Keys disponibles en data: ${data.keys}');
+        }
         
         // Log detallado de cada campo posible para userId
         print('🔍 AuthService: Buscando userId en los siguientes campos:');
-        print('  - data["userId"]: ${data['userId']}');
-        print('  - data["id"]: ${data['id']}');
-        print('  - data["user_id"]: ${data['user_id']}');
-        print('  - data["idPersona"]: ${data['idPersona']}');
-        print('  - data["persona_id"]: ${data['persona_id']}');
-        print('  - data["personaId"]: ${data['personaId']}');
+        if (data is Map) {
+          print('  - data["userId"]: ${data['userId']}');
+          print('  - data["id"]: ${data['id']}');
+          print('  - data["user_id"]: ${data['user_id']}');
+          print('  - data["idPersona"]: ${data['idPersona']}');
+          print('  - data["persona_id"]: ${data['persona_id']}');
+          print('  - data["personaId"]: ${data['personaId']}');
+        }
         
         // Extraer token - puede estar en diferentes campos
-        _authToken = data['token'] ?? data['access_token'] ?? data['accessToken'] ?? data['authToken'];
+        _authToken = (data is Map) ? (data['token'] ?? data['access_token'] ?? data['accessToken'] ?? data['authToken']) : null;
         
-        // Extraer userType - puede estar en diferentes campos
-        _userType = data['userType'] ?? data['role'] ?? data['user_type'] ?? data['type'] ?? userType;
+        // Extraer userType - incluir también 'rol' del backend
+        _userType = (data is Map)
+            ? (data['userType'] ?? data['role'] ?? data['rol'] ?? data['user_type'] ?? data['type'])
+            : null;
         
-        // Extraer userId - puede estar en diferentes campos
-        _userId = data['userId']?.toString() ?? data['id']?.toString() ?? data['user_id']?.toString() ?? data['idPersona']?.toString();
+        // Extraer userId - PRIORIZAR id_persona sobre id para docentes
+        _userId = (data is Map) ? (data['id_persona']?.toString() ?? data['idPersona']?.toString() ?? data['userId']?.toString() ?? data['id']?.toString() ?? data['user_id']?.toString()) : null;
         
-        // Si data contiene un objeto user anidado, buscar ahí también
-        if (data['user'] != null) {
-          final userData = data['user'];
+        // Si data contiene un objeto user/usuario anidado, buscar ahí también
+        final userData = (data is Map) ? (data['user'] ?? data['usuario']) : null;
+        if (userData != null) {
           print('📊 AuthService: Datos de usuario anidados: $userData');
-          _userType = _userType ?? userData['userType'] ?? userData['role'] ?? userData['user_type'] ?? userData['type'];
-          _authToken = _authToken ?? userData['token'] ?? userData['access_token'];
-          _userId = _userId ?? userData['userId']?.toString() ?? userData['id']?.toString() ?? userData['user_id']?.toString() ?? userData['idPersona']?.toString() ?? userData['id_persona']?.toString();
-          
-          // Extraer el rol del objeto persona anidado
-          if (userData['persona'] != null) {
-            final personaData = userData['persona'];
-            print('👤 AuthService: Datos de persona: $personaData');
-            _userType = _userType ?? personaData['rol'];
+          if (userData is Map) {
+            _userType = _userType ?? userData['userType'] ?? userData['role'] ?? userData['rol'] ?? userData['user_type'] ?? userData['type'];
+            _authToken = _authToken ?? userData['token'] ?? userData['access_token'];
+            // PRIORIZAR id_persona sobre id
+            _userId = _userId ?? userData['id_persona']?.toString() ?? userData['idPersona']?.toString() ?? userData['userId']?.toString() ?? userData['id']?.toString() ?? userData['user_id']?.toString();
+            
+            // Extraer el rol y el idPersona del objeto persona anidado
+            if (userData['persona'] != null && userData['persona'] is Map) {
+              final personaData = Map<String, dynamic>.from(userData['persona']);
+              print('👤 AuthService: Datos de persona: $personaData');
+              _userType = _userType ?? personaData['rol'];
+              // CRÍTICO: tomar idPersona para usar /api/cursosPersonas/{idPersona}
+              _userId = _userId ?? personaData['idPersona']?.toString() ?? personaData['id_persona']?.toString();
+            }
+          }
+        }
+
+        // Normalizar userType a valores canónicos 'docente' o 'estudiante'
+        if (_userType != null) {
+          final t = _userType!.trim().toLowerCase();
+          // Coincidencias exactas y sin usar contains
+          if (t == 'docente' || t == 'teacher' || t == 'profesor') {
+            _userType = 'docente';
+          } else if (t == 'estudiante' || t == 'student' || t == 'alumno') {
+            _userType = 'estudiante';
+          } else {
+            print('⚠️ AuthService: Rol desconocido en backend: $t');
           }
         }
         
