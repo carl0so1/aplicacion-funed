@@ -105,40 +105,57 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    print('Cargando cursos para tipo de usuario: ${widget.userType}');
-    
     Map<String, dynamic> result;
     
     if (widget.userType.toLowerCase() == 'estudiante') {
       // Usar el nuevo endpoint con ID de persona si está disponible
       final userId = AuthService.userId;
       if (userId != null && userId.isNotEmpty) {
-        print('🆔 Usando endpoint cursosPersonas con ID: $userId');
         result = await ApiService.getCoursesByPersonId(userId);
       } else {
-        print('⚠️ No se encontró userId, usando endpoint por defecto');
         result = await ApiService.getCoursesByStudent();
       }
     } else {
       result = await ApiService.getCoursesByTeacher();
     }
     
-    print('Resultado de la API: $result');
-    
     if (mounted) {
       if (result['success'] == true) {
         // Mapear los datos de la API al formato esperado
-        List<Map<String, dynamic>> rawCourses;
-        
-        // Verificar si la respuesta tiene estructura de cursosPersonas
-        if (result['data'] is Map && result['data']['cursos'] != null) {
-          rawCourses = List<Map<String, dynamic>>.from(result['data']['cursos'] ?? []);
-        } else {
-          rawCourses = List<Map<String, dynamic>>.from(result['data'] ?? []);
+        List<Map<String, dynamic>> rawCourses = [];
+        final dynamic data = result['data'];
+
+        // 1) Si data ya es una lista
+        if (data is List) {
+          rawCourses = List<Map<String, dynamic>>.from(data);
         }
-        
+        // 2) Si data es un mapa, intentar en varias claves conocidas
+        else if (data is Map) {
+          final candidateKeys = [
+            'cursos', 'courses', 'data', 'result', 'records', 'items',
+            'cursosPersonas', 'cursos_personas', 'lista', 'rows'
+          ];
+          for (final key in candidateKeys) {
+            final value = data[key];
+            if (value is List) {
+              rawCourses = List<Map<String, dynamic>>.from(value);
+              break;
+            }
+          }
+          // 3) Fallback: buscar la primera lista de mapas en los valores
+          if (rawCourses.isEmpty) {
+            for (final entry in data.entries) {
+              final value = entry.value;
+              if (value is List && value.isNotEmpty && value.first is Map) {
+                rawCourses = List<Map<String, dynamic>>.from(value);
+                break;
+              }
+            }
+          }
+        }
+
         final mappedCourses = rawCourses.map((course) => _mapCourseData(course)).toList();
-        
+
         setState(() {
           _courses = mappedCourses;
           _currentCourse = _courses.isNotEmpty ? _courses.first : null;

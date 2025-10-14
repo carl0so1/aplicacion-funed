@@ -379,7 +379,7 @@ class ApiService {
       };
     }
   }
-}
+ 
 
   // --- Endpoints de Render especificados ---
 

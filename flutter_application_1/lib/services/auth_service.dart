@@ -49,58 +49,49 @@ class AuthService {
     required String userType,
   }) async {
     try {
-      print('🚀 AuthService: Iniciando login para $email como $userType');
       final response = await ApiService.login(email, password);
       
-      print('📋 AuthService: Respuesta del login: $response');
-      
       if (response['success']) {
-        // Guardar el token de autenticación
+        // Guardar el token y datos del usuario usando id_persona correctamente
         final data = response['data'];
-        print('📊 AuthService: Data recibida: $data');
-        print('📊 AuthService: Estructura completa de data: ${data.runtimeType}');
-        print('📊 AuthService: Keys disponibles en data: ${data.keys}');
         
-        // Log detallado de cada campo posible para userId
-        print('🔍 AuthService: Buscando userId en los siguientes campos:');
-        print('  - data["userId"]: ${data['userId']}');
-        print('  - data["id"]: ${data['id']}');
-        print('  - data["user_id"]: ${data['user_id']}');
-        print('  - data["idPersona"]: ${data['idPersona']}');
-        print('  - data["persona_id"]: ${data['persona_id']}');
-        print('  - data["personaId"]: ${data['personaId']}');
-        
-        // Extraer token - puede estar en diferentes campos
+        // Token
         _authToken = data['token'] ?? data['access_token'] ?? data['accessToken'] ?? data['authToken'];
         
-        // Extraer userType - puede estar en diferentes campos
-        _userType = data['userType'] ?? data['role'] ?? data['user_type'] ?? data['type'] ?? userType;
-        
-        // Extraer userId - puede estar en diferentes campos
-        _userId = data['userId']?.toString() ?? data['id']?.toString() ?? data['user_id']?.toString() ?? data['idPersona']?.toString();
-        
-        // Si data contiene un objeto user anidado, buscar ahí también
-        if (data['user'] != null) {
-          final userData = data['user'];
-          print('📊 AuthService: Datos de usuario anidados: $userData');
-          _userType = _userType ?? userData['userType'] ?? userData['role'] ?? userData['user_type'] ?? userData['type'];
-          _authToken = _authToken ?? userData['token'] ?? userData['access_token'];
-          _userId = _userId ?? userData['userId']?.toString() ?? userData['id']?.toString() ?? userData['user_id']?.toString() ?? userData['idPersona']?.toString() ?? userData['id_persona']?.toString();
-          
-          // Extraer el rol del objeto persona anidado
-          if (userData['persona'] != null) {
-            final personaData = userData['persona'];
-            print('👤 AuthService: Datos de persona: $personaData');
-            _userType = _userType ?? personaData['rol'];
-          }
+        // Usuario anidado
+        final userData = (data is Map) ? (data['user'] ?? {}) : {};
+        final personaData = (userData is Map) ? (userData['persona'] ?? {}) : {};
+
+        // Email real del usuario
+        _userEmail = (userData is Map ? userData['email']?.toString() : null) ?? email;
+
+        // Tipo de usuario (rol)
+        _userType = (personaData is Map ? personaData['rol']?.toString() : null)
+            ?? (userData is Map ? userData['role']?.toString() : null)
+            ?? data['userType']?.toString()
+            ?? userType;
+
+        // IDs capturados del payload
+        final String? idPersona =
+            (personaData is Map ? (personaData['id_persona']?.toString() ?? personaData['idPersona']?.toString()) : null)
+            ?? (userData is Map ? (userData['id_persona']?.toString() ?? userData['idPersona']?.toString()) : null)
+            ?? data['id_persona']?.toString()
+            ?? data['idPersona']?.toString()
+            ?? data['persona_id']?.toString()
+            ?? data['personaId']?.toString();
+
+        final String? idGenerico =
+            (userData is Map ? (userData['id']?.toString() ?? userData['userId']?.toString()) : null)
+            ?? data['id']?.toString()
+            ?? data['userId']?.toString();
+
+        // Elegir SIEMPRE id_persona si existe
+        _userId = idPersona ?? idGenerico;
+
+        // Si no hay userId utilizable, abortar
+        if (_userId == null || _userId!.isEmpty) {
+          return false;
         }
-        
-        _userEmail = email;
-        
-        print('✅ AuthService: Token guardado: $_authToken');
-        print('✅ AuthService: UserType guardado: $_userType');
-        print('✅ AuthService: Email guardado: $_userEmail');
-        print('✅ AuthService: UserId guardado: $_userId');
         
         // Validar que tenemos los datos mínimos necesarios
         if (_authToken == null) {
