@@ -98,8 +98,10 @@ class ApiService {
       print('👨‍🏫 Obteniendo cursos para docente');
       print('🔑 Token: ${token?.substring(0, 20)}...');
       
+      final url = Uri.parse('$baseUrl/api/cursos/docente');
+      print('➡️ GET: $url');
       final response = await http.get(
-        Uri.parse('$baseUrl/cursos/docente'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
 
@@ -116,8 +118,10 @@ class ApiService {
   static Future<Map<String, dynamic>> getCourseDetailForStudent(String courseId) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/cursos/estudiante/$courseId');
+      print('➡️ GET: $url');
       final response = await http.get(
-        Uri.parse('$baseUrl/cursos/estudiante/$courseId'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
 
@@ -154,8 +158,10 @@ class ApiService {
   static Future<Map<String, dynamic>> getCourseDetailForTeacher(String courseId) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/cursos/docente/$courseId');
+      print('➡️ GET: $url');
       final response = await http.get(
-        Uri.parse('$baseUrl/cursos/docente/$courseId'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
 
@@ -200,8 +206,10 @@ class ApiService {
   static Future<Map<String, dynamic>> getModulesByTeacher() async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/modulos/docente');
+      print('➡️ GET: $url');
       final response = await http.get(
-        Uri.parse('$baseUrl/modulos/docente'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
 
@@ -215,8 +223,10 @@ class ApiService {
   static Future<Map<String, dynamic>> getAttendanceRecords(String courseId) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/asistencia/$courseId');
+      print('➡️ GET: $url');
       final response = await http.get(
-        Uri.parse('$baseUrl/asistencia/$courseId'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
 
@@ -229,8 +239,10 @@ class ApiService {
   static Future<Map<String, dynamic>> updateAttendance(String courseId, Map<String, dynamic> attendanceData) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/asistencia/$courseId');
+      print('➡️ PUT: $url');
       final response = await http.put(
-        Uri.parse('$baseUrl/asistencia/$courseId'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
         body: jsonEncode(attendanceData),
       );
@@ -245,8 +257,10 @@ class ApiService {
   static Future<Map<String, dynamic>> getUserProfile() async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/perfil');
+      print('➡️ GET: $url');
       final response = await http.get(
-        Uri.parse('$baseUrl/perfil'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
 
@@ -259,8 +273,10 @@ class ApiService {
   static Future<Map<String, dynamic>> updateUserProfile(Map<String, dynamic> profileData) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/perfil');
+      print('➡️ PUT: $url');
       final response = await http.put(
-        Uri.parse('$baseUrl/perfil'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
         body: jsonEncode(profileData),
       );
@@ -275,8 +291,10 @@ class ApiService {
   static Future<Map<String, dynamic>> createCourse(Map<String, dynamic> courseData) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/admin/cursos');
+      print('➡️ POST: $url');
       final response = await http.post(
-        Uri.parse('$baseUrl/admin/cursos'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
         body: jsonEncode(courseData),
       );
@@ -290,8 +308,10 @@ class ApiService {
   static Future<Map<String, dynamic>> updateCourse(String courseId, Map<String, dynamic> courseData) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/admin/cursos/$courseId');
+      print('➡️ PUT: $url');
       final response = await http.put(
-        Uri.parse('$baseUrl/admin/cursos/$courseId'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
         body: jsonEncode(courseData),
       );
@@ -305,8 +325,10 @@ class ApiService {
   static Future<Map<String, dynamic>> deleteCourse(String courseId) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/admin/cursos/$courseId');
+      print('➡️ DELETE: $url');
       final response = await http.delete(
-        Uri.parse('$baseUrl/admin/cursos/$courseId'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
 
@@ -319,8 +341,10 @@ class ApiService {
   static Future<Map<String, dynamic>> getAllCourses() async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/admin/cursos');
+      print('➡️ GET: $url');
       final response = await http.get(
-        Uri.parse('$baseUrl/admin/cursos'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
 
@@ -330,14 +354,43 @@ class ApiService {
     }
   }
 
+  // Procesamiento de respuestas
+  static Map<String, dynamic> _processResponse(http.Response response) {
+    print('🧾 Procesando respuesta (${response.statusCode})');
+    dynamic parsed;
+    try {
+      if (response.body.isNotEmpty) {
+        parsed = jsonDecode(response.body);
+      }
+    } catch (_) {
+      parsed = response.body; // no-JSON, devolver texto crudo
+    }
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return {
+        'success': true,
+        'data': parsed,
+      };
+    } else {
+      return {
+        'success': false,
+        'message': 'Error ${response.statusCode}',
+        'details': parsed,
+      };
+    }
+  }
+}
+
   // --- Endpoints de Render especificados ---
 
   // Módulos por oferta
   static Future<Map<String, dynamic>> getModulesByOffer(String idOferta) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/modulos/oferta/$idOferta');
+      print('➡️ GET: $url');
       final response = await http.get(
-        Uri.parse('$baseUrl/api/modulos/oferta/$idOferta'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
       return _processResponse(response);
@@ -350,8 +403,10 @@ class ApiService {
   static Future<Map<String, dynamic>> getGradesByOffer(String idOferta) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/calificaciones/oferta/$idOferta');
+      print('➡️ GET: $url');
       final response = await http.get(
-        Uri.parse('$baseUrl/api/calificaciones/oferta/$idOferta'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
       return _processResponse(response);
@@ -367,8 +422,10 @@ class ApiService {
   }) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/asistencia/persona/$idPersona/curso/$idMatricula');
+      print('➡️ GET: $url');
       final response = await http.get(
-        Uri.parse('$baseUrl/api/asistencia/persona/$idPersona/curso/$idMatricula'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
       return _processResponse(response);
@@ -381,28 +438,15 @@ class ApiService {
   static Future<Map<String, dynamic>> getSupportContentByOffer(String idCursoOferta) async {
     try {
       final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/contenidoApoyo/oferta/$idCursoOferta');
+      print('➡️ GET: $url');
       final response = await http.get(
-        Uri.parse('$baseUrl/api/contenidoApoyo/oferta/$idCursoOferta'),
+        url,
         headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
       );
       return _processResponse(response);
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión: $e'};
-    }
-  }
-
-  // Procesamiento de respuestas
-  static Map<String, dynamic> _processResponse(http.Response response) {
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return {
-        'success': true,
-        'data': jsonDecode(response.body),
-      };
-    } else {
-      return {
-        'success': false,
-        'message': 'Error ${response.statusCode}: ${response.body}',
-      };
     }
   }
 }
