@@ -449,4 +449,58 @@ class ApiService {
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
+
+  // Docente asignado por módulo para una oferta
+  static Future<Map<String, dynamic>> getModuleTeachersByOffer(String idOfertaCurso) async {
+    try {
+      final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/modulo-docente/oferta/$idOfertaCurso');
+      print('➡️ GET: $url');
+      final response = await http.get(
+        url,
+        headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
+      );
+      return _processResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  // Notas por persona y oferta de curso
+  static Future<Map<String, dynamic>> getModuleGradesByPersonAndOffer({
+    required String idPersona,
+    required String idOfertaCurso,
+  }) async {
+    try {
+      final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/notas-modulo/$idPersona/$idOfertaCurso');
+      print('➡️ GET: $url');
+      final response = await http.get(
+        url,
+        headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
+      );
+      return _processResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  // Asistencias por persona y curso matriculado
+  static Future<Map<String, dynamic>> getAttendanceByPersonAndEnrolledCourse({
+    required String idPersona,
+    required String idCursoMatriculado,
+  }) async {
+    try {
+      final token = AuthService.authToken;
+      final url = Uri.parse('$baseUrl/api/asistencia/persona/$idPersona/curso/$idCursoMatriculado');
+      print('➡️ GET: $url');
+      final response = await http.get(
+        url,
+        headers: {...headers, if (token != null) 'Authorization': 'Bearer $token'},
+      );
+      return _processResponse(response);
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión: $e'};
+    }
+  }
 }
